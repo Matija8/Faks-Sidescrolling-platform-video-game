@@ -223,7 +223,7 @@ void funcMakePlayer(void){
 
 void nivo(float** podaci,int* br, float* min_floor, float* max_floor){
 	
-	FILE* f=fopen(".nivo","r");
+	FILE* f=fopen(".nivo.txt","r");
 	
 	if(f==NULL){
 		fprintf(stderr,"fopen failed- functions.c line 241 %d\n",__LINE__);
