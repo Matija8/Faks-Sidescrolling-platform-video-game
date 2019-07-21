@@ -46,4 +46,3 @@ void image_done(Image *image);
  * image.
  */
 void image_read(Image *image, char *filename);
-

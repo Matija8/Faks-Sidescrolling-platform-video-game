@@ -83,8 +83,8 @@ void image_read(Image *image, char *filename) {
   image->height = bih.height;
 
   /*
-   * U zavisnosti od toga koliko bitova informacija se cita po pikselu 
-   * (da li samo R, G i B komponenta ili R, G, B i A), alociramo niz 
+   * U zavisnosti od toga koliko bitova informacija se cita po pikselu
+   * (da li samo R, G i B komponenta ili R, G, B i A), alociramo niz
    * odgovarajuce duzine.
    */
   if (bih.bitcount == 24)
@@ -100,13 +100,13 @@ void image_read(Image *image, char *filename) {
   /* Ucitavaju se podaci o pikselima i smestaju u alocirani niz. */
   if (bih.bitcount == 24)
     /*
-     * Ako se po pikselu cita 24 bita = 3 bajta informacija, pretpostavljamo 
-     * da oni (ta 3 bajta) predstavljaju R, G i B komponentu boje (1 bajt po 
+     * Ako se po pikselu cita 24 bita = 3 bajta informacija, pretpostavljamo
+     * da oni (ta 3 bajta) predstavljaju R, G i B komponentu boje (1 bajt po
      * komponenti).
      */
     for (i = 0; i < bih.width * bih.height; i++) {
       /*
-       * Ovo mozda izgleda cudno, to sto se komponente boje citaju u suprotnom redosledu, 
+       * Ovo mozda izgleda cudno, to sto se komponente boje citaju u suprotnom redosledu,
        * tj. prvo plava, pa zelena, pa crvena, ali tako pise u specifikaciji bmp formata.
        */
       fread(&b, sizeof(char), 1, file);
@@ -119,8 +119,8 @@ void image_read(Image *image, char *filename) {
     }
   else if (bih.bitcount == 32)
     /*
-     * Ako se po pikselu cita 32 bita = 4 bajta informacija, pretpostavljamo 
-     * da oni (ta 4 bajta) predstavljaju R, G, B i A komponentu boje (1 bajt po 
+     * Ako se po pikselu cita 32 bita = 4 bajta informacija, pretpostavljamo
+     * da oni (ta 4 bajta) predstavljaju R, G, B i A komponentu boje (1 bajt po
      * komponenti).
      */
     for (i = 0; i < bih.width * bih.height; i++) {

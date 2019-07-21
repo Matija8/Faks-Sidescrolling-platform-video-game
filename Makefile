@@ -1,4 +1,4 @@
-PROGRAM = Game.out
+PROGRAM = game.out
 CC      = gcc
 CFLAGS  = -g -Wall -I/usr/X11R6/include -I/usr/pkg/include
 LDFLAGS = -L/usr/X11R6/lib -L/usr/pkg/lib
