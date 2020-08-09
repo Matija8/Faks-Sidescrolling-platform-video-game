@@ -1,4 +1,4 @@
-#ifndef CONSTANTS_H
+#pragma once
 
 #define JUMP_SPEED 0.5
 #define TERMINAL_VELOCITY 0.5
@@ -10,5 +10,3 @@
 #define BMP_GRASS "Assets/grass.bmp"
 #define BMP_BACKGROUND "Assets/background.bmp"
 #define BMP_LAVA "Assets/lava.bmp"
-
-#endif

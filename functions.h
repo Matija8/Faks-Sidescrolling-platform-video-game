@@ -1,5 +1,4 @@
-//ovde cemo drzati pomocne funkcije
-
+#pragma once
 
 void funcMakeBlock(GLuint names, float min_x, float max_x, float floor_y);
 

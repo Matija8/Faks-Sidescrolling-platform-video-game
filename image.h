@@ -1,4 +1,7 @@
-//Kod preuzet sa vezbi asistenta Ivana Cukica
+// Kod preuzet sa vezbi asistenta Ivana Cukica.
+
+#pragma once
+
 /*
  * Dve strukture koje opisuju strukturu dva zaglavlja
  * kojima pocinje svaka slika u bmp formatu.
