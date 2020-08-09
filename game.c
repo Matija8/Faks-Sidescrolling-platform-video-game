@@ -4,20 +4,7 @@
 #include "image.h"
 #include "functions.h"
 
-
-#define JUMP_SPEED 0.5
-#define TERMINAL_VELOCITY 0.5
-
-#define TIMER_ID 0            //Makroi za tajmer, po uzoru na bounce primer sa vezbi.
-#define TIMER_INTERVAL 20
-
-#define FILENAME0 ".wall.bmp"
-#define FILENAME1 ".grass.bmp"
-#define FILENAME2 ".background.bmp"
-#define FILENAME3 ".lava.bmp"
-
-
-//globalne promenljive
+#include "constants.h"
 
 static GLuint names[4];            //teksture.
 static float x_cam=0;            //pozicija kamere i igraca na x osi.
@@ -468,7 +455,7 @@ static void initialize_textures(void)
     
     
     /* Kreira se tekstura zid. */
-    image_read(image, FILENAME0);
+    image_read(image, BMP_WALL);
     
     glBindTexture(GL_TEXTURE_2D, names[0]);
     glTexParameteri(GL_TEXTURE_2D,
@@ -482,7 +469,7 @@ static void initialize_textures(void)
                  GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
 
     /* Kreira se tekstura trava. */
-    image_read(image, FILENAME1);
+    image_read(image, BMP_GRASS);
 
     glBindTexture(GL_TEXTURE_2D, names[1]);
     glTexParameteri(GL_TEXTURE_2D,
@@ -496,7 +483,7 @@ static void initialize_textures(void)
                  GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
     
     /* Kreira se tekstura pozadina. */
-    image_read(image, FILENAME2);
+    image_read(image, BMP_BACKGROUND);
 
     glBindTexture(GL_TEXTURE_2D, names[2]);
     glTexParameteri(GL_TEXTURE_2D,
@@ -510,7 +497,7 @@ static void initialize_textures(void)
                  GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
     
     /* Kreira se tekstura lava. */
-    image_read(image, FILENAME3);
+    image_read(image, BMP_LAVA);
 
     glBindTexture(GL_TEXTURE_2D, names[3]);
     glTexParameteri(GL_TEXTURE_2D,
