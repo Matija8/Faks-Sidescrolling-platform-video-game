@@ -1,40 +1,34 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <GL/glut.h>
 
-#include "image.h"
-#include "functions.h"
 #include "constants.h"
+#include "error_handling.h"
+#include "functions.h"
+#include "image.h"
+#include "window.h"
 
-static GLuint names[4];     // Teksture.
-static float current_floor; // Vrednost y-koordinate podloge ispod igraca (ne nuzno poda).
+static GLuint names[4]; // Teksture.
 static float lava_floor;
 static bool animation_ongoing = true;
 
 static float t = 0; // Vreme.
 
-static int fall_flag = 0;  // Flag za pad.
-static float jump_begin_y; // Y koordinata pozicije igraca na pocetku skoka.
-static int death_flag = 0;
 float *podaci; // Informacije o podlozi.
 static float min_floor;
 static float max_floor;
 static int d = 0;
 static int n; // Broj podloga.
 static int d_change_flag = 1;
+static float current_floor_y; // Vrednost y-koordinate podloge ispod igraca (ne nuzno poda).
 static float current_right_x; // Pozicije ivica trenutnog bloka.
 static float current_left_x;
 static float next_left_x; // Pozicije ivica sledeceg/proslog bloka.
 static float last_right_x;
 static float next_floor; // Vrednost y-koordinate sledece podloge.
 static float last_floor;
-
-struct AppWindow
-{
-    int width = 1200, height = 800;
-    bool is_fullscreen = false;
-};
 
 struct Camera
 {
@@ -50,6 +44,8 @@ struct Player
     double y_velocity = JUMP_SPEED;
     bool is_jumping = false;
     bool is_moving = false;
+    bool is_falling = false;
+    bool is_above_platform = true;
 };
 
 static Player p;
@@ -65,8 +61,6 @@ static void on_keyboard(unsigned char key, int x, int y);
 
 auto &debug_log = std::cout;
 
-auto toggleFullScreen(AppWindow &window) noexcept -> void;
-
 auto main(int argc, char **argv) -> int
 {
     glutInit(&argc, argv);
@@ -74,9 +68,7 @@ auto main(int argc, char **argv) -> int
 
     glutCreateWindow("Game Running");
 
-    glutPositionWindow(300, 150);
-    glutReshapeWindow(window.width, window.height);
-    toggleFullScreen(window);
+    window.initWindow();
 
     glutKeyboardFunc(on_keyboard);
     glutReshapeFunc(on_reshape);
@@ -125,12 +117,11 @@ static void on_keyboard(unsigned char key, int x, int y)
 
     case 'W':
     case 'w':
-        if (fall_flag != 1)
+        if (!p.is_falling)
         {
             // debug_log << "Not falling!\n";
             p.is_jumping = true;
             t = 0;
-            jump_begin_y = current_floor;
         }
         break;
 
@@ -151,22 +142,7 @@ static void on_keyboard(unsigned char key, int x, int y)
 
     case 'F':
     case 'f':
-        toggleFullScreen(window);
-    }
-}
-
-auto toggleFullScreen(AppWindow &window) noexcept -> void
-{
-    const bool was_fullscreen = window.is_fullscreen;
-    window.is_fullscreen = !window.is_fullscreen;
-
-    if (!was_fullscreen)
-    {
-        glutFullScreen();
-    }
-    else
-    {
-        glutReshapeWindow(window.width, window.height);
+        window.toggleFullScreen();
     }
 }
 
@@ -188,11 +164,10 @@ static void on_timer(int value)
     // Move on x axis.
     p.x += p.x_velocity * dt;
 
-    if (!p.is_jumping && (death_flag != 0 || p.y > current_floor)) // have a margin of error for floor hover.
-    {                                                              //Propadanje. TODO: Bag. Propadanje je lose preko podloga.
+    if (!p.is_jumping && (!p.is_above_platform || p.y > current_floor_y)) // have a margin of error for floor hover.
+    {
 
-        fall_flag = 1;
-        p.is_jumping = false;
+        p.is_falling = true;
         t += dt / 5; // scale speeds
         p.y_velocity = GRAVITY * t;
 
@@ -202,32 +177,32 @@ static void on_timer(int value)
     }
     else
     {
-        fall_flag = 0;
+        p.is_falling = false;
         t = 0;
     }
 
     // TODO: Get delta time and use it for moving.
 
-    if (p.is_jumping && fall_flag != 1)
+    if (p.is_jumping && !p.is_falling)
     {
         t += dt / 5; // This is time spent falling!
         p.y_velocity -= GRAVITY * t;
         p.y += p.y_velocity * t;
         if (p.y_velocity <= 0)
         {
-            fall_flag = 1;
+            p.is_falling = true;
             p.is_jumping = false;
             t = 0;
         }
     }
     else
     {
-        if (death_flag == 0 && p.y <= current_floor)
+        if (p.is_above_platform && p.y <= current_floor_y)
         {
-            fall_flag = 0;
+            p.is_falling = false;
             p.is_jumping = false;
             t = 0;
-            p.y = current_floor;
+            p.y = current_floor_y;
             p.y_velocity = JUMP_SPEED;
         }
     }
@@ -241,15 +216,9 @@ static void on_timer(int value)
 //Kod preuzet sa vezbi asistenta Ivana Cukica. Primer Cube.
 static void on_reshape(int width, int height)
 {
-    if (!window.is_fullscreen)
-        window = {width, height};
+    assertIsTrueElseThrow(width >= 0 && height >= 0);
 
-    glViewport(0, 0, width, height);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(60, (float)width / height, 1, 60);
-    glMatrixMode(GL_MODELVIEW);
+    window.onReshape(width, height);
 }
 
 static void on_display(void)
@@ -291,7 +260,7 @@ static void on_display(void)
             last_right_x = current_right_x;
             current_left_x = next_left_x;
             current_right_x = podaci[3 * d + 1];
-            current_floor = podaci[3 * d + 2];
+            current_floor_y = podaci[3 * d + 2];
             next_left_x = current_right_x + 1000;
 
             d_change_flag = 0;
@@ -301,7 +270,7 @@ static void on_display(void)
             next_left_x = podaci[3 * (d + 1)];
             current_left_x = podaci[3 * d];
             current_right_x = podaci[3 * d + 1];
-            current_floor = podaci[3 * d + 2];
+            current_floor_y = podaci[3 * d + 2];
             next_floor = podaci[3 * (d + 1) + 2];
 
             if (d == 0)
@@ -325,31 +294,25 @@ static void on_display(void)
 
     //Na trenutnoj podlozi smo.
 
-    if (p.x + 0.2 >= current_left_x && p.x - 0.2 <= current_right_x && p.y >= current_floor)
+    if (p.x + 0.2 >= current_left_x && p.x - 0.2 <= current_right_x && p.y >= current_floor_y)
     {
-        death_flag = 0;
+        p.is_above_platform = true;
     }
 
-    //Propadamo levo.
+    const bool is_falling_left = p.x + 0.2 < current_left_x && p.x - 0.2 > last_right_x,
+               is_falling_right = p.x - 0.2 > current_right_x && p.x + 0.2 < next_left_x;
 
-    if (p.x + 0.2 < current_left_x && p.x - 0.2 > last_right_x)
+    if (is_falling_left || is_falling_right)
     {
-        death_flag = 1;
-    }
-
-    //Propadamo desno.
-
-    if (p.x - 0.2 > current_right_x && p.x + 0.2 < next_left_x)
-    {
-        death_flag = 1;
+        p.is_above_platform = false;
     }
 
     //provera da li se zakucavamo u trenutnu podlogu kad propadamo.
 
-    if (p.x + 0.2 >= current_left_x && p.x - 0.2 <= current_right_x && p.y < current_floor)
+    if (p.x + 0.2 >= current_left_x && p.x - 0.2 <= current_right_x && p.y < current_floor_y)
     {
 
-        if (p.y > current_floor - 1.8)
+        if (p.y > current_floor_y - 1.8)
         {
 
             if (p.x_velocity > 0 && p.x < current_left_x + 0.2)
@@ -392,7 +355,7 @@ static void on_display(void)
 
     //Stigli smo na kraj.
 
-    if (d == (n - 1) && p.y == current_floor)
+    if (d == (n - 1) && p.y == current_floor_y)
     {
         free(podaci);
         printf("You WIN!\n");
