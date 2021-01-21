@@ -1,11 +1,31 @@
 #pragma once
 
-void funcMakeBlock(GLuint names, float min_x, float max_x, float floor_y);
+auto funcMakeBlock(
+    GLuint names,
+    float min_x,
+    float max_x,
+    float floor_y) -> void;
 
-void funcMakeBackground(GLuint name1, GLuint name2,float min_x, float max_x, float min_y, float max_y, float far_z, float near_z);
+auto funcMakeBackground(
+    GLuint name1,
+    GLuint name2,
+    float min_x,
+    float max_x,
+    float min_y,
+    float max_y,
+    float far_z,
+    float near_z) -> void;
 
-void funcMakePlayer(void);
+auto funcMakePlayer(void) -> void;
 
-void nivo(float** podaci,int* br, float* min_floor, float* max_floor);
+auto nivo(
+    float **podaci,
+    int *br,
+    float *min_floor,
+    float *max_floor) -> void;
 
-void funcMakeFinishSign(GLuint name, float min_x, float max_x, float floor_y);
+auto funcMakeFinishSign(
+    GLuint name,
+    float min_x,
+    float max_x,
+    float floor_y) -> void;
