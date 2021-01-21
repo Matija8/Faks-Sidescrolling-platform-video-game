@@ -1,17 +1,24 @@
 # Sidescrolling platform video game
 
-Copy of a project from the 3rd year Computer graphics course at the
+Project from the 3rd year Computer graphics course at the
 University of Belgrade, Faculty of Mathematics.
 Original repository is lost.
 
 ## To install
 
-### *nix (Linux/MacOS)
+### Linux (Ubuntu)
 
 Position yourself in the project directory (".../Sidescrolling-platform-video-game") with your shell.
 
 ```bash
 cd ./Sidescrolling-platform-video-game
+```
+
+Install dependencies (openGl utility toolkit)
+
+```bash
+chmod +x ./Dependencies/apt_install.sh
+./Dependencies/apt_install.sh
 ```
 
 Run make:

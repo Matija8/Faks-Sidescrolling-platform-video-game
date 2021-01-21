@@ -48,4 +48,4 @@ void image_done(Image *image);
  * u fajlu cije je ime filename u strukturu na koju pokazuje
  * image.
  */
-void image_read(Image *image, char *filename);
+void image_read(Image *image, const char *filename);

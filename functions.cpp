@@ -234,7 +234,7 @@ void nivo(float** podaci,int* br, float* min_floor, float* max_floor){
     *br=n;
     int fl=sizeof(float);
 
-    if((*podaci=realloc(*podaci,3*n*fl))==NULL){        //min_x,max_x,floor
+    if((*podaci=(float*)realloc(*podaci,3*n*fl))==NULL){        //min_x,max_x,floor
         fprintf(stderr,"realloc failed- functions.c %d\n",__LINE__);
         exit(EXIT_FAILURE);
     }

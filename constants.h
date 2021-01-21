@@ -1,12 +1,14 @@
 #pragma once
 
-#define JUMP_SPEED 0.5
-#define TERMINAL_VELOCITY 0.5
+constexpr double JUMP_SPEED = 0.5,
+                 GRAVITY = 0.07,
+                 DEFAULT_X_VELOCITY = 0.1,
+                 TERMINAL_Y_VELOCITY = 0.5;
 
-#define TIMER_ID 0
-#define TIMER_INTERVAL 20
+constexpr int TIMER_ID = 0;
+constexpr unsigned TIMER_INTERVAL = 20;
 
-#define BMP_WALL "Assets/wall.bmp"
-#define BMP_GRASS "Assets/grass.bmp"
-#define BMP_BACKGROUND "Assets/background.bmp"
-#define BMP_LAVA "Assets/lava.bmp"
+const char *const BMP_WALL = "Assets/wall.bmp";
+const char *const BMP_GRASS = "Assets/grass.bmp";
+const char *const BMP_BACKGROUND = "Assets/background.bmp";
+const char *const BMP_LAVA = "Assets/lava.bmp";

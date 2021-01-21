@@ -40,7 +40,7 @@ void image_done(Image *image) {
   free(image);
 }
 
-void image_read(Image *image, char *filename) {
+void image_read(Image *image, const char *filename) {
 
   FILE *file;
   BITMAPFILEHEADER bfh;
