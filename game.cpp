@@ -10,12 +10,12 @@
 static GLuint names[4];     // Teksture.
 static float current_floor; // Vrednost y-koordinate podloge ispod igraca (ne nuzno poda).
 static float lava_floor;
-static int animation_ongoing;
+static bool animation_ongoing = true;
 
-static float t = 0;                 // Vreme.
+static float t = 0; // Vreme.
 
-static int fall_flag = 0;           // Flag za pad.
-static float jump_begin_y;          // Y koordinata pozicije igraca na pocetku skoka.
+static int fall_flag = 0;  // Flag za pad.
+static float jump_begin_y; // Y koordinata pozicije igraca na pocetku skoka.
 static int death_flag = 0;
 float *podaci; // Informacije o podlozi.
 static float min_floor;
@@ -29,6 +29,12 @@ static float next_left_x; // Pozicije ivica sledeceg/proslog bloka.
 static float last_right_x;
 static float next_floor; // Vrednost y-koordinate sledece podloge.
 static float last_floor;
+
+struct AppWindow
+{
+    int width = 1200, height = 800;
+    bool is_fullscreen = false;
+};
 
 struct Camera
 {
@@ -48,6 +54,7 @@ struct Player
 
 static Player p;
 static Camera c;
+static AppWindow window;
 
 static void initialize_lights(void);
 static void initialize_textures(void);
@@ -58,13 +65,18 @@ static void on_keyboard(unsigned char key, int x, int y);
 
 auto &debug_log = std::cout;
 
-int main(int argc, char **argv)
+auto toggleFullScreen(AppWindow &window) noexcept -> void;
+
+auto main(int argc, char **argv) -> int
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 
     glutCreateWindow("Game Running");
-    glutFullScreen();
+
+    glutPositionWindow(300, 150);
+    glutReshapeWindow(window.width, window.height);
+    toggleFullScreen(window);
 
     glutKeyboardFunc(on_keyboard);
     glutReshapeFunc(on_reshape);
@@ -73,13 +85,13 @@ int main(int argc, char **argv)
     podaci = (float *)malloc(sizeof(double));
     nivo(&podaci, &n, &min_floor, &max_floor);
     p.y = podaci[2]; //Igrac pocinje na visini prve podloge.
-    animation_ongoing = 0;
 
     initialize_textures();
     initialize_lights();
     glClearColor(0.75, 0.75, 0.75, 0);
     glEnable(GL_DEPTH_TEST);
 
+    glutTimerFunc(TIMER_INTERVAL, on_timer, TIMER_ID);
     glutMainLoop();
 
     return 0;
@@ -104,23 +116,11 @@ static void on_keyboard(unsigned char key, int x, int y)
     case 'A':
     case 'a':
         p.x_velocity = -DEFAULT_X_VELOCITY;
-        if (!animation_ongoing)
-        {
-            glutTimerFunc(TIMER_INTERVAL, on_timer, TIMER_ID);
-            animation_ongoing = 1;
-        }
-        glutPostRedisplay();
         break;
 
     case 'D':
     case 'd':
         p.x_velocity = DEFAULT_X_VELOCITY;
-        if (!animation_ongoing)
-        {
-            glutTimerFunc(TIMER_INTERVAL, on_timer, TIMER_ID);
-            animation_ongoing = 1;
-        }
-        glutPostRedisplay();
         break;
 
     case 'W':
@@ -131,31 +131,42 @@ static void on_keyboard(unsigned char key, int x, int y)
             p.is_jumping = true;
             t = 0;
             jump_begin_y = current_floor;
-            if (!animation_ongoing)
-            {
-                glutTimerFunc(TIMER_INTERVAL, on_timer, TIMER_ID);
-                animation_ongoing = 1;
-            }
         }
         break;
 
     case 'S':
     case 's':
         p.x_velocity = 0;
-        glutPostRedisplay();
         break;
 
-        /*case 'I':        //Debug mod.
-    case 'i':
-        y_cam=y_cam+dy_cam;
-        glutPostRedisplay();
+    case 'J':
+    case 'j':
+        c.y -= 0.1;
         break;
 
     case 'K':
     case 'k':
-        y_cam=y_cam-dy_cam;
-        glutPostRedisplay();
-        break;*/
+        c.y += 0.1;
+        break;
+
+    case 'F':
+    case 'f':
+        toggleFullScreen(window);
+    }
+}
+
+auto toggleFullScreen(AppWindow &window) noexcept -> void
+{
+    const bool was_fullscreen = window.is_fullscreen;
+    window.is_fullscreen = !window.is_fullscreen;
+
+    if (!was_fullscreen)
+    {
+        glutFullScreen();
+    }
+    else
+    {
+        glutReshapeWindow(window.width, window.height);
     }
 }
 
@@ -224,19 +235,17 @@ static void on_timer(int value)
     glutPostRedisplay();
 
     if (animation_ongoing)
-    {
         glutTimerFunc(TIMER_INTERVAL, on_timer, TIMER_ID);
-    }
 }
 
 //Kod preuzet sa vezbi asistenta Ivana Cukica. Primer Cube.
 static void on_reshape(int width, int height)
 {
+    if (!window.is_fullscreen)
+        window = {width, height};
 
-    /* Podesava se viewport. */
     glViewport(0, 0, width, height);
 
-    /* Podesava se projekcija. */
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(60, (float)width / height, 1, 60);
@@ -357,8 +366,6 @@ static void on_display(void)
     {
         d_change_flag = 1;
         d++;
-        //printf("next (floor%d)\n",d);
-        glutPostRedisplay();
     }
     if (p.x + 0.2 >= next_left_x && p.y < next_floor)
     {
@@ -374,8 +381,6 @@ static void on_display(void)
     {
         d_change_flag = 1;
         d--;
-        //printf("previous (floor%d)\n",d);
-        glutPostRedisplay();
     }
     if (p.x - 0.2 <= last_right_x && p.y < last_floor)
     {

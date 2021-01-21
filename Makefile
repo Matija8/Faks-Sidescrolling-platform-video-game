@@ -1,6 +1,6 @@
 PROGRAM = a.out
 CXX = g++
-WFLAGS 	= -Wall -Wextra
+WFLAGS 	= -Wall -Wextra -std=c++17
 HINCLUDES = -I/usr/X11R6/include -I/usr/pkg/include
 CFLAGS 	= $(WFLAGS) $(HINCLUDES)
 LDFLAGS = -L/usr/X11R6/lib -L/usr/pkg/lib
