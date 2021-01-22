@@ -17,11 +17,10 @@ static bool animation_ongoing = true;
 
 static float time_in_air = 0; // Vreme.
 
-static int n;
 static double max_floor,
     min_floor;
 
-static int d = 0;
+static size_t what_is_d = 0;
 static int d_change_flag = 1;
 static double current_floor_y, // Vrednost y-koordinate podloge ispod igraca (ne nuzno poda).
     current_right_x,           // Pozicije ivica trenutnog bloka.
@@ -55,9 +54,9 @@ struct Player
     }
 
 public:
-    double x = 0;
+    double x_coord = 0;
     double x_velocity = 0;
-    double y;
+    double y_coord;
     double y_velocity = JUMP_SPEED;
     bool is_jumping = false;
     bool is_moving = false;
@@ -65,10 +64,10 @@ public:
     bool is_above_platform = true;
 };
 
-static Player p;
-static Camera c;
+static Player player;
+static Camera camera;
 static AppWindow window;
-static Level l;
+static Level level;
 
 static void initialize_lights(void);
 static void initialize_textures(void);
@@ -109,11 +108,10 @@ auto main(int argc, char **argv) -> int
     glutReshapeFunc(on_reshape);
     glutDisplayFunc(on_display);
 
-    l = level();
-    n = l.number_of_platforms;
-    min_floor = l.min_floor,
-    max_floor = l.max_floor,
-    p.y = l.podaci[0].y; //Igrac pocinje na visini prve podloge.
+    level = get_level(".nivo.txt");
+    min_floor = level.min_floor,
+    max_floor = level.max_floor,
+    player.y_coord = level.podaci[0].y; //Igrac pocinje na visini prve podloge.
 
     initialize_textures();
     initialize_lights();
@@ -129,47 +127,47 @@ auto main(int argc, char **argv) -> int
 static auto move_on_y_axis(const double dt = 1) -> void
 {
 
-    if (!p.is_jumping && (!p.is_above_platform || p.y > current_floor_y)) // have a margin of error for floor hover.
+    if (!player.is_jumping && (!player.is_above_platform || player.y_coord > current_floor_y)) // have a margin of error for floor hover.
     {
 
-        p.is_falling = true;
+        player.is_falling = true;
         time_in_air += dt / 5; // scale speeds
-        p.y_velocity = GRAVITY * time_in_air;
+        player.y_velocity = GRAVITY * time_in_air;
         // p.y_velocity += GRAVITY * dt / 5;
 
-        p.y_velocity = std::min(p.y_velocity, TERMINAL_Y_VELOCITY);
+        player.y_velocity = std::min(player.y_velocity, TERMINAL_Y_VELOCITY);
 
-        p.y -= p.y_velocity * dt;
+        player.y_coord -= player.y_velocity * dt;
     }
     else
     {
-        p.is_falling = false;
+        player.is_falling = false;
         time_in_air = 0;
     }
 
     // TODO: Get delta time and use it for moving.
 
-    if (p.is_jumping && !p.is_falling)
+    if (player.is_jumping && !player.is_falling)
     {
         time_in_air += dt / 5; // This is time spent falling!
-        p.y_velocity -= GRAVITY * time_in_air;
-        p.y += p.y_velocity * time_in_air;
-        if (p.y_velocity <= 0)
+        player.y_velocity -= GRAVITY * time_in_air;
+        player.y_coord += player.y_velocity * time_in_air;
+        if (player.y_velocity <= 0)
         {
-            p.is_falling = true;
-            p.is_jumping = false;
+            player.is_falling = true;
+            player.is_jumping = false;
             time_in_air = 0;
         }
     }
     else
     {
-        if (p.is_above_platform && p.y <= current_floor_y)
+        if (player.is_above_platform && player.y_coord <= current_floor_y)
         {
-            p.is_falling = false;
-            p.is_jumping = false;
+            player.is_falling = false;
+            player.is_jumping = false;
             time_in_air = 0;
-            p.y = current_floor_y;
-            p.y_velocity = JUMP_SPEED;
+            player.y_coord = current_floor_y;
+            player.y_velocity = JUMP_SPEED;
         }
     }
 
@@ -193,37 +191,37 @@ static void on_keyboard(unsigned char key, int x, int y)
 
     case 'A':
     case 'a':
-        p.moveLeft();
+        player.moveLeft();
         break;
 
     case 'D':
     case 'd':
-        p.moveRight();
+        player.moveRight();
         break;
 
     case 'W':
     case 'w':
-        if (!p.is_falling)
+        if (!player.is_falling)
         {
             // debug_log << "Not falling!\n";
-            p.is_jumping = true;
+            player.is_jumping = true;
             time_in_air = 0;
         }
         break;
 
     case 'S':
     case 's':
-        p.stopX();
+        player.stopX();
         break;
 
     case 'J':
     case 'j':
-        c.y -= 0.1;
+        camera.y -= 0.1;
         break;
 
     case 'K':
     case 'k':
-        c.y += 0.1;
+        camera.y += 0.1;
         break;
 
     case 'F':
@@ -239,13 +237,13 @@ static void on_timer(int value)
     if (value != TIMER_ID)
         return;
 
-    if (p.y <= lava_floor)
+    if (player.y_coord <= lava_floor)
     {
         lose_game();
     }
 
     // Move on x axis.
-    p.x += p.x_velocity * dt;
+    player.x_coord += player.x_velocity * dt;
 
     move_on_y_axis(dt);
 
@@ -271,59 +269,58 @@ static void on_display(void)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    c.x = p.x; // Camera is focused on player?
+    camera.x = player.x_coord; // Camera is focused on player?
 
-    c.y = std::max(c.y, p.y - 1);
-    c.y = std::min(c.y, p.y + 1);
+    camera.y = std::max(camera.y, player.y_coord - 1);
+    camera.y = std::min(camera.y, player.y_coord + 1);
 
     gluLookAt(
-        c.x, c.y + 2, 10, // eye (x,y,z)
-        c.x, c.y, 0,      // center
-        0, 1, 0);         // Vector up (x,y,z)
+        camera.x, camera.y + 2, 10, // eye (x,y,z)
+        camera.x, camera.y, 0,      // center
+        0, 1, 0);                   // Vector up (x,y,z)
 
     //Pravimo podloge.
 
-    int i;
-    for (i = 0; i < n; i++)
+    for (size_t i = 0; i < level.podaci.size(); i++)
     {
-        funcMakeBlock(names[1], l.podaci[i]);
-        if (i == n - 1)
+        funcMakeBlock(names[1], level.podaci[i]);
+        if (i == level.podaci.size() - 1)
         {
-            funcMakeFinishSign(names[0], l.podaci[i]);
+            funcMakeFinishSign(names[0], level.podaci[i]);
         }
     }
 
     //inicijalizacija podloge;
 
-    if (d >= 0 && d < n && d_change_flag == 1)
+    if (what_is_d >= 0 && what_is_d < level.podaci.size() && d_change_flag == 1)
     {
-        if (d == n - 1)
+        if (what_is_d == level.podaci.size() - 1)
         {
             last_right_x = current_right_x;
             current_left_x = next_left_x;
-            current_right_x = l.podaci[d].x_right;
-            current_floor_y = l.podaci[d].y;
+            current_right_x = level.podaci[what_is_d].x_right;
+            current_floor_y = level.podaci[what_is_d].y;
             next_left_x = current_right_x + 1000;
 
             d_change_flag = 0;
         }
         else
         {
-            next_left_x = l.podaci[d + 1].x_left;
-            current_left_x = l.podaci[d].x_left;
-            current_right_x = l.podaci[d].x_right;
-            current_floor_y = l.podaci[d].y;
-            next_floor = l.podaci[d + 1].y;
+            next_left_x = level.podaci[what_is_d + 1].x_left;
+            current_left_x = level.podaci[what_is_d].x_left;
+            current_right_x = level.podaci[what_is_d].x_right;
+            current_floor_y = level.podaci[what_is_d].y;
+            next_floor = level.podaci[what_is_d + 1].y;
 
-            if (d == 0)
+            if (what_is_d == 0)
             {
                 last_right_x = current_left_x - 10; // TODO
                 last_floor = lava_floor;
             }
             else
             {
-                last_right_x = l.podaci[d - 1].x_right;
-                last_floor = l.podaci[d - 1].y;
+                last_right_x = level.podaci[what_is_d - 1].x_right;
+                last_floor = level.podaci[what_is_d - 1].y;
             }
 
             d_change_flag = 0;
@@ -336,68 +333,69 @@ static void on_display(void)
 
     //Na trenutnoj podlozi smo.
 
-    if (p.x + 0.2 >= current_left_x && p.x - 0.2 <= current_right_x && p.y >= current_floor_y)
+    if (player.x_coord + 0.2 >= current_left_x && player.x_coord - 0.2 <= current_right_x && player.y_coord >= current_floor_y)
     {
-        p.is_above_platform = true;
+        player.is_above_platform = true;
     }
 
-    const bool is_falling_left = p.x + 0.2 < current_left_x && p.x - 0.2 > last_right_x,
-               is_falling_right = p.x - 0.2 > current_right_x && p.x + 0.2 < next_left_x;
+    const bool is_falling_left = player.x_coord + 0.2 < current_left_x && player.x_coord - 0.2 > last_right_x,
+               is_falling_right = player.x_coord - 0.2 > current_right_x && player.x_coord + 0.2 < next_left_x;
 
     if (is_falling_left || is_falling_right)
     {
-        p.is_above_platform = false;
+        player.is_above_platform = false;
     }
 
     //provera da li se zakucavamo u trenutnu podlogu kad propadamo.
 
-    if (p.x + 0.2 >= current_left_x && p.x - 0.2 <= current_right_x && p.y < current_floor_y)
+    if (player.x_coord + 0.2 >= current_left_x && player.x_coord - 0.2 <= current_right_x && player.y_coord < current_floor_y)
     {
 
-        if (p.y > current_floor_y - 1.8)
+        if (player.y_coord > current_floor_y - 1.8)
         {
 
-            if (p.x_velocity > 0 && p.x < current_left_x + 0.2)
-                p.x = current_left_x - 0.2;
+            if (player.x_velocity > 0 && player.x_coord < current_left_x + 0.2)
+                player.x_coord = current_left_x - 0.2;
 
-            if (p.x_velocity < 0 && p.x > current_right_x - 0.2)
-                p.x = current_right_x + 0.2;
+            if (player.x_velocity < 0 && player.x_coord > current_right_x - 0.2)
+                player.x_coord = current_right_x + 0.2;
         }
     }
 
     //Stigli smo do sledece podloge.
 
-    if (p.x + 0.2 >= next_left_x && p.y >= next_floor)
+    if (player.x_coord + 0.2 >= next_left_x && player.y_coord >= next_floor)
     {
         d_change_flag = 1;
-        d++;
+        what_is_d++;
     }
-    if (p.x + 0.2 >= next_left_x && p.y < next_floor)
+    if (player.x_coord + 0.2 >= next_left_x && player.y_coord < next_floor)
     {
-        if (p.y > next_floor - 1.8)
+        if (player.y_coord > next_floor - 1.8)
         { //Igrac je visok 0.8. Podloga je visine 1.
-            p.x = next_left_x - 0.2;
+            player.x_coord = next_left_x - 0.2;
         }
     }
 
     //Vratili smo se na prethodnu podlogu.
 
-    if (p.x - 0.2 <= last_right_x && p.y >= last_floor)
+    if (player.x_coord - 0.2 <= last_right_x && player.y_coord >= last_floor)
     {
+        assertIsTrueElseThrow(what_is_d > 0);
         d_change_flag = 1;
-        d--;
+        what_is_d--;
     }
-    if (p.x - 0.2 <= last_right_x && p.y < last_floor)
+    if (player.x_coord - 0.2 <= last_right_x && player.y_coord < last_floor)
     {
-        if (p.y > last_floor - 1.8)
+        if (player.y_coord > last_floor - 1.8)
         {
-            p.x = last_right_x + 0.2;
+            player.x_coord = last_right_x + 0.2;
         }
     }
 
     //Stigli smo na kraj.
 
-    if (d == (n - 1) && p.y == current_floor_y)
+    if (what_is_d == (level.podaci.size() - 1) && player.y_coord == current_floor_y)
     {
         win_game();
     }
@@ -405,7 +403,7 @@ static void on_display(void)
     //Model igraca.
 
     glPushMatrix();
-    glTranslatef(p.x, p.y, 1);
+    glTranslatef(player.x_coord, player.y_coord, 1);
     funcMakePlayer();
     glPopMatrix();
 
@@ -415,7 +413,7 @@ static void on_display(void)
 
     funcMakeBackground(names[2],
                        names[3],
-                       l.podaci[0].x_left - 20, l.podaci.back().x_right + 30,
+                       level.podaci[0].x_left - 20, level.podaci.back().x_right + 30,
                        lava_floor, max_floor + 10, -6, 8);
 
     glutSwapBuffers();

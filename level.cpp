@@ -2,25 +2,25 @@
 
 #include <iostream>
 #include <fstream>
+#include <string>
 
-auto level() -> Level
+auto get_level(const std::string &file_with_level_data) -> Level
 {
-    Level l;
+    Level level;
 
-    std::ifstream f(".nivo.txt");
+    std::ifstream f(file_with_level_data);
 
     if (!f)
         throw std::logic_error("TODO Message");
 
-    // fscanf(f, "%d", &l.n); //prvo vidimo broj podataka
-    f >> l.number_of_platforms;
-    if (l.number_of_platforms < 2)
+    f >> level.number_of_platforms;
+    if (level.number_of_platforms < 2)
         throw std::logic_error("TODO Message");
 
-    l.min_floor = 10000;
-    l.max_floor = -100000; // TODO
+    level.min_floor = 10000;
+    level.max_floor = -100000; // TODO
 
-    for (unsigned i = 0; i < l.number_of_platforms; i++)
+    for (unsigned i = 0; i < level.number_of_platforms; i++)
     {
         double min_platform_x_coord,
             max_platform_x_coord,
@@ -30,15 +30,11 @@ auto level() -> Level
             max_platform_x_coord >>
             platform_y_coord;
 
-        // l.podaci[i * 3] = min_platform_x_coord;
-        // l.podaci[i * 3 + 1] = max_platform_x_coord;
-        // l.podaci[i * 3 + 2] = platform_y_coord;
+        level.podaci.push_back({min_platform_x_coord, max_platform_x_coord, platform_y_coord});
 
-        l.podaci.push_back({min_platform_x_coord, max_platform_x_coord, platform_y_coord});
-
-        l.min_floor = std::min(platform_y_coord, l.min_floor);
-        l.max_floor = std::max(platform_y_coord, l.max_floor);
+        level.min_floor = std::min(platform_y_coord, level.min_floor);
+        level.max_floor = std::max(platform_y_coord, level.max_floor);
     }
 
-    return l;
+    return level;
 }

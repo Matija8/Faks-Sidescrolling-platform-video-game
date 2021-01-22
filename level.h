@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 
 struct Platform
 {
@@ -18,4 +19,4 @@ struct Level
         max_floor;
 };
 
-auto level() -> Level;
+auto get_level(const std::string &file_with_level_data) -> Level;
