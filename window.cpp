@@ -2,14 +2,14 @@
 
 #include <GL/glut.h>
 
-auto AppWindow::initWindow() noexcept -> void
+auto AppWindow::init_window() noexcept -> void
 {
     glutPositionWindow(300, 150);
     glutReshapeWindow(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-    toggleFullScreen();
+    toggle_fullscreen();
 }
 
-auto AppWindow::toggleFullScreen() noexcept -> void
+auto AppWindow::toggle_fullscreen() noexcept -> void
 {
     const bool was_fullscreen = m_is_fullscreen;
     m_is_fullscreen = !m_is_fullscreen;
@@ -24,7 +24,7 @@ auto AppWindow::toggleFullScreen() noexcept -> void
     }
 }
 
-auto AppWindow::onReshape(unsigned width, unsigned height) noexcept -> void
+auto AppWindow::on_reshape(unsigned width, unsigned height) noexcept -> void
 {
     if (!m_is_fullscreen)
         setDimensions(width, height);

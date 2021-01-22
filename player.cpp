@@ -6,17 +6,17 @@ extern double current_floor_y;
 
 extern double time_in_air;
 
-auto Player::moveLeft() -> void
+auto Player::move_left() -> void
 {
     x_velocity = -DEFAULT_X_VELOCITY;
 }
 
-auto Player::moveRight() -> void
+auto Player::move_right() -> void
 {
     x_velocity = DEFAULT_X_VELOCITY;
 }
 
-auto Player::stopX() -> void
+auto Player::stop_x() -> void
 {
     x_velocity = 0;
 }

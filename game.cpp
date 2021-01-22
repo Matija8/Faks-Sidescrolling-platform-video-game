@@ -44,6 +44,8 @@ static AppWindow window;
 static Level level;
 
 auto on_display() -> void;
+auto on_update() -> void;
+auto platform_checking() -> void;
 auto on_timer(int value) -> void;
 auto on_reshape(int width, int height) -> void;
 auto on_keyboard(unsigned char key, int x, int y) -> void;
@@ -57,7 +59,7 @@ auto main(int argc, char **argv) -> int
 
     glutCreateWindow("Game Running");
 
-    window.initWindow();
+    window.init_window();
 
     glutKeyboardFunc(on_keyboard);
     glutReshapeFunc(on_reshape);
@@ -96,12 +98,12 @@ auto on_keyboard(unsigned char key, int x, int y) -> void
 
     case 'A':
     case 'a':
-        player.moveLeft();
+        player.move_left();
         break;
 
     case 'D':
     case 'd':
-        player.moveRight();
+        player.move_right();
         break;
 
     case 'W':
@@ -111,7 +113,7 @@ auto on_keyboard(unsigned char key, int x, int y) -> void
 
     case 'S':
     case 's':
-        player.stopX();
+        player.stop_x();
         break;
 
     case 'J':
@@ -126,26 +128,19 @@ auto on_keyboard(unsigned char key, int x, int y) -> void
 
     case 'F':
     case 'f':
-        window.toggleFullScreen();
+        window.toggle_fullscreen();
     }
 }
 
 auto on_timer(int value) -> void
 {
-    const double dt = 1;
 
     if (value != TIMER_ID)
         return;
 
-    if (player.y_coord <= lava_floor)
-    {
-        lose_game();
-    }
-
-    // Move on x axis.
-    player.x_coord += player.x_velocity * dt;
-
-    player.move_on_y_axis(dt);
+    // TODO
+    on_update();
+    // on_render()
 
     glutPostRedisplay();
 
@@ -153,43 +148,33 @@ auto on_timer(int value) -> void
         glutTimerFunc(TIMER_INTERVAL, on_timer, TIMER_ID);
 }
 
+auto on_update() -> void
+{
+
+    if (player.y_coord <= lava_floor)
+    {
+        lose_game();
+    }
+
+    platform_checking();
+
+    const double dt = 1;
+
+    // Move on x axis.
+    player.x_coord += player.x_velocity * dt;
+
+    player.move_on_y_axis(dt);
+}
+
 auto on_reshape(int width, int height) -> void
 {
     assertIsTrueElseThrow(width >= 0 && height >= 0);
 
-    window.onReshape(width, height);
+    window.on_reshape(width, height);
 }
 
-auto on_display() -> void
-{
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    camera.x = player.x_coord;
-
-    camera.y = std::max(camera.y, player.y_coord - 1);
-    camera.y = std::min(camera.y, player.y_coord + 1);
-
-    gluLookAt(
-        camera.x, camera.y + 2, 10, // eye (x,y,z)
-        camera.x, camera.y, 0,      // center
-        0, 1, 0);                   // Vector up (x,y,z)
-
-    //Pravimo podloge.
-
-    for (size_t i = 0; i < level.podaci.size(); i++)
-    {
-        funcMakeBlock(names[1], level.podaci[i]);
-        if (i == level.podaci.size() - 1)
-        {
-            funcMakeFinishSign(names[0], level.podaci[i]);
-        }
-    }
-
-    //inicijalizacija podloge;
+auto platform_checking() -> void
+{ // TODO
 
     if (what_is_d >= 0 && what_is_d < level.podaci.size() && d_change_flag == 1)
     {
@@ -298,13 +283,25 @@ auto on_display() -> void
     {
         win_game();
     }
+}
 
-    //Model igraca.
+auto on_display() -> void
+{
 
-    glPushMatrix();
-    glTranslatef(player.x_coord, player.y_coord, 1);
-    funcMakePlayer();
-    glPopMatrix();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    camera.x = player.x_coord;
+
+    camera.y = std::max(camera.y, player.y_coord - 1);
+    camera.y = std::min(camera.y, player.y_coord + 1);
+
+    gluLookAt(
+        camera.x, camera.y + 2, 10, // eye (x,y,z)
+        camera.x, camera.y, 0,      // center
+        0, 1, 0);                   // Vector up (x,y,z)
 
     //Dodajemo pozadinu.
 
@@ -315,6 +312,22 @@ auto on_display() -> void
         names[3],
         level.podaci[0].x_left - 20, level.podaci.back().x_right + 30,
         lava_floor, max_floor + 10, -6, 8);
+
+    //Pravimo podloge.
+
+    for (Platform platform : level.podaci)
+    {
+        funcMakeBlock(names[1], platform);
+    }
+
+    funcMakeFinishSign(names[0], level.podaci.back());
+
+    //Model igraca.
+
+    glPushMatrix();
+    glTranslatef(player.x_coord, player.y_coord, 1);
+    funcMakePlayer();
+    glPopMatrix();
 
     glutSwapBuffers();
 }

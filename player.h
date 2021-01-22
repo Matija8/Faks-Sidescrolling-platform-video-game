@@ -4,11 +4,11 @@
 
 struct Player
 {
-    auto moveLeft() -> void;
+    auto move_left() -> void;
 
-    auto moveRight() -> void;
+    auto move_right() -> void;
 
-    auto stopX() -> void;
+    auto stop_x() -> void;
 
     auto jump() -> void;
 

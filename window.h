@@ -6,9 +6,9 @@ private:
     static constexpr unsigned DEFAULT_WIDTH = 1200, DEFAULT_HEIGHT = 800;
 
 public:
-    auto initWindow() noexcept -> void;
-    auto toggleFullScreen() noexcept -> void;
-    auto onReshape(unsigned width, unsigned height) noexcept -> void;
+    auto init_window() noexcept -> void;
+    auto toggle_fullscreen() noexcept -> void;
+    auto on_reshape(unsigned width, unsigned height) noexcept -> void;
 
 private:
     auto setDimensions(unsigned width, unsigned height) noexcept -> void;
