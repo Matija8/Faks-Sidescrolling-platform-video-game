@@ -8,6 +8,7 @@
 #include "error_handling.h"
 #include "functions.h"
 #include "level.h"
+#include "player.h"
 #include "textures.h"
 #include "window.h"
 
@@ -15,15 +16,16 @@ GLuint names[4]; // Teksture.
 static float lava_floor;
 static bool animation_ongoing = true;
 
-static float time_in_air = 0; // Vreme.
+double time_in_air = 0; // Vreme.
 
 static double max_floor,
     min_floor;
 
+double current_floor_y; // Vrednost y-koordinate podloge ispod igraca (ne nuzno poda).
+
 static size_t what_is_d = 0;
 static int d_change_flag = 1;
-static double current_floor_y, // Vrednost y-koordinate podloge ispod igraca (ne nuzno poda).
-    current_right_x,           // Pozicije ivica trenutnog bloka.
+static double current_right_x, // Pozicije ivica trenutnog bloka.
     current_left_x,
     next_left_x, // Pozicije ivica sledeceg/proslog bloka.
     last_right_x,
@@ -34,34 +36,6 @@ struct Camera
 {
     double x = 0;
     double y = 0.3;
-};
-
-struct Player
-{
-    auto moveLeft()
-    {
-        x_velocity = -DEFAULT_X_VELOCITY;
-    }
-
-    auto moveRight()
-    {
-        x_velocity = DEFAULT_X_VELOCITY;
-    }
-
-    auto stopX()
-    {
-        x_velocity = 0;
-    }
-
-public:
-    double x_coord = 0;
-    double x_velocity = 0;
-    double y_coord;
-    double y_velocity = JUMP_SPEED;
-    bool is_jumping = false;
-    bool is_moving = false;
-    bool is_falling = false;
-    bool is_above_platform = true;
 };
 
 static Player player;
@@ -105,57 +79,6 @@ auto main(int argc, char **argv) -> int
     return 0;
 }
 
-auto move_on_y_axis(const double dt = 1) -> void
-{
-
-    if (!player.is_jumping && (!player.is_above_platform || player.y_coord > current_floor_y)) // have a margin of error for floor hover.
-    {
-
-        player.is_falling = true;
-        time_in_air += dt / 5; // scale speeds
-        player.y_velocity = GRAVITY * time_in_air;
-        // p.y_velocity += GRAVITY * dt / 5;
-
-        player.y_velocity = std::min(player.y_velocity, TERMINAL_Y_VELOCITY);
-
-        player.y_coord -= player.y_velocity * dt;
-    }
-    else
-    {
-        player.is_falling = false;
-        time_in_air = 0;
-    }
-
-    // TODO: Get delta time and use it for moving.
-
-    if (player.is_jumping && !player.is_falling)
-    {
-        time_in_air += dt / 5; // This is time spent falling!
-        player.y_velocity -= GRAVITY * time_in_air;
-        player.y_coord += player.y_velocity * time_in_air;
-        if (player.y_velocity <= 0)
-        {
-            player.is_falling = true;
-            player.is_jumping = false;
-            time_in_air = 0;
-        }
-    }
-    else
-    {
-        if (player.is_above_platform && player.y_coord <= current_floor_y)
-        {
-            player.is_falling = false;
-            player.is_jumping = false;
-            time_in_air = 0;
-            player.y_coord = current_floor_y;
-            player.y_velocity = JUMP_SPEED;
-        }
-    }
-
-    // debug_log << p.y_velocity << "\n";
-}
-
-
 auto on_keyboard(unsigned char key, int x, int y) -> void
 {
     (void)x;
@@ -183,12 +106,7 @@ auto on_keyboard(unsigned char key, int x, int y) -> void
 
     case 'W':
     case 'w':
-        if (!player.is_falling)
-        {
-            // debug_log << "Not falling!\n";
-            player.is_jumping = true;
-            time_in_air = 0;
-        }
+        player.jump();
         break;
 
     case 'S':
@@ -212,7 +130,6 @@ auto on_keyboard(unsigned char key, int x, int y) -> void
     }
 }
 
-
 auto on_timer(int value) -> void
 {
     const double dt = 1;
@@ -228,7 +145,7 @@ auto on_timer(int value) -> void
     // Move on x axis.
     player.x_coord += player.x_velocity * dt;
 
-    move_on_y_axis(dt);
+    player.move_on_y_axis(dt);
 
     glutPostRedisplay();
 
@@ -242,7 +159,6 @@ auto on_reshape(int width, int height) -> void
 
     window.onReshape(width, height);
 }
-
 
 auto on_display() -> void
 {

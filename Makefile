@@ -8,7 +8,7 @@ LDLIBS 	= -lglut -lGLU -lGL
 
 MAKE_OBJECT_FILE = $(CXX) $(CFLAGS) $< -c $(LDLIBS)
 
-$(PROGRAM): game.o level.o functions.o image.o textures.o window.o
+$(PROGRAM): game.o level.o functions.o image.o player.o textures.o window.o
 	$(CXX) $(HINCLUDES) $(LDFLAGS) $^ $(LDLIBS) -o $(PROGRAM)
 
 game.o: game.cpp constants.h window.h error_handling.h
@@ -21,6 +21,9 @@ functions.o: functions.cpp functions.h
 	$(MAKE_OBJECT_FILE)
 
 image.o: image.c image.h
+	$(MAKE_OBJECT_FILE)
+
+player.o: player.cpp player.h
 	$(MAKE_OBJECT_FILE)
 
 textures.o: textures.cpp textures.h

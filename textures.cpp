@@ -5,6 +5,8 @@
 
 // Code by Ivan Cukic
 
+// TODO: Seperate lights logic.
+
 extern GLuint names[4]; // TODO: Rename to texture names?
 
 auto initialize_textures() -> void
