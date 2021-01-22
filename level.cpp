@@ -4,9 +4,9 @@
 #include <fstream>
 #include <string>
 
-auto get_level(const std::string &file_with_level_data) -> Level
+auto get_platforms(const std::string &file_with_level_data) -> std::vector<Platform>
 {
-    Level level;
+    std::vector<Platform> platforms;
 
     std::ifstream f(file_with_level_data);
 
@@ -18,9 +18,6 @@ auto get_level(const std::string &file_with_level_data) -> Level
     if (number_of_platforms < 2)
         throw std::logic_error("TODO Message");
 
-    level.min_floor = 10000;
-    level.max_floor = -100000; // TODO
-
     for (size_t i = 0; i < number_of_platforms; i++)
     {
         double min_platform_x_coord,
@@ -31,13 +28,10 @@ auto get_level(const std::string &file_with_level_data) -> Level
             max_platform_x_coord >>
             platform_y_coord;
 
-        level.podaci.push_back({min_platform_x_coord, max_platform_x_coord, platform_y_coord});
-
-        level.min_floor = std::min(platform_y_coord, level.min_floor);
-        level.max_floor = std::max(platform_y_coord, level.max_floor);
+        platforms.push_back({min_platform_x_coord, max_platform_x_coord, platform_y_coord});
     }
 
-    return level;
+    return platforms;
 }
 
 auto lose_game() -> void

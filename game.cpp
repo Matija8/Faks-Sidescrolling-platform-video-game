@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -12,14 +13,13 @@
 #include "textures.h"
 #include "window.h"
 
+// TODO: Create main.cpp file. Move all to src folder.
+
 GLuint names[4]; // Teksture.
 static float lava_floor;
 static bool animation_ongoing = true;
 
 double time_in_air = 0; // Vreme.
-
-static double max_floor,
-    min_floor;
 
 double current_floor_y; // Vrednost y-koordinate podloge ispod igraca (ne nuzno poda).
 
@@ -52,6 +52,36 @@ auto on_keyboard(unsigned char key, int x, int y) -> void;
 
 auto &debug_log = std::cout;
 
+auto get_y_vals_from_platforms(
+    const std::vector<Platform> &platforms) -> std::vector<double>;
+
+auto get_min_y_val_from_platforms(const std::vector<Platform> &platforms) -> double
+{
+    assertIsTrueElseThrow(platforms.size() > 0);
+    const std::vector<double> platform_y_vals = get_y_vals_from_platforms(platforms);
+    return *(std::min_element(platform_y_vals.begin(), platform_y_vals.end()));
+}
+auto get_max_y_val_from_platforms(const std::vector<Platform> &platforms) -> double
+{
+    assertIsTrueElseThrow(platforms.size() > 0);
+    const std::vector<double> platform_y_vals = get_y_vals_from_platforms(platforms);
+    return *(std::max_element(platform_y_vals.begin(), platform_y_vals.end()));
+}
+
+auto get_y_vals_from_platforms(
+    const std::vector<Platform> &platforms) -> std::vector<double>
+{
+    std::vector<double> platform_y_vals(platforms.size());
+    std::transform(
+        platforms.begin(), platforms.end(),
+        platform_y_vals.begin(),
+        [](const Platform &platform) noexcept -> double {
+            return platform.y;
+        });
+
+    return platform_y_vals;
+}
+
 auto main(int argc, char **argv) -> int
 {
     glutInit(&argc, argv);
@@ -65,9 +95,9 @@ auto main(int argc, char **argv) -> int
     glutReshapeFunc(on_reshape);
     glutDisplayFunc(on_display);
 
-    level = get_level(".nivo.txt");
-    min_floor = level.min_floor,
-    max_floor = level.max_floor,
+    level = {get_platforms(".nivo.txt")};
+    assertIsTrueElseThrow(level.podaci.size() > 0);
+
     player.y_coord = level.podaci[0].y; //Igrac pocinje na visini prve podloge.
 
     initialize_textures();
@@ -304,6 +334,9 @@ auto on_display() -> void
         0, 1, 0);                   // Vector up (x,y,z)
 
     //Dodajemo pozadinu.
+
+    static const double min_floor = get_min_y_val_from_platforms(level.podaci),
+                        max_floor = get_max_y_val_from_platforms(level.podaci);
 
     lava_floor = min_floor - 0.5;
 

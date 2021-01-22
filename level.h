@@ -13,11 +13,9 @@ struct Platform
 struct Level
 {
     std::vector<Platform> podaci;
-    double min_floor,
-        max_floor;
 };
 
-auto get_level(const std::string &file_with_level_data) -> Level;
+auto get_platforms(const std::string &file_with_level_data) -> std::vector<Platform>;
 
 auto lose_game() -> void;
 
