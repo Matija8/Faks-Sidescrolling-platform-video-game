@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "error_handling.h"
 #include "functions.h"
+#include "level.h"
 #include "image.h"
 #include "window.h"
 
@@ -14,21 +15,21 @@ static GLuint names[4]; // Teksture.
 static float lava_floor;
 static bool animation_ongoing = true;
 
-static float t = 0; // Vreme.
+static float time_in_air = 0; // Vreme.
 
-float *podaci; // Informacije o podlozi.
-static float min_floor;
-static float max_floor;
+static int n;
+static double max_floor,
+    min_floor;
+
 static int d = 0;
-static int n; // Broj podloga.
 static int d_change_flag = 1;
-static float current_floor_y; // Vrednost y-koordinate podloge ispod igraca (ne nuzno poda).
-static float current_right_x; // Pozicije ivica trenutnog bloka.
-static float current_left_x;
-static float next_left_x; // Pozicije ivica sledeceg/proslog bloka.
-static float last_right_x;
-static float next_floor; // Vrednost y-koordinate sledece podloge.
-static float last_floor;
+static double current_floor_y, // Vrednost y-koordinate podloge ispod igraca (ne nuzno poda).
+    current_right_x,           // Pozicije ivica trenutnog bloka.
+    current_left_x,
+    next_left_x, // Pozicije ivica sledeceg/proslog bloka.
+    last_right_x,
+    next_floor, // Vrednost y-koordinate sledece podloge.
+    last_floor;
 
 struct Camera
 {
@@ -38,6 +39,22 @@ struct Camera
 
 struct Player
 {
+    auto moveLeft()
+    {
+        x_velocity = -DEFAULT_X_VELOCITY;
+    }
+
+    auto moveRight()
+    {
+        x_velocity = DEFAULT_X_VELOCITY;
+    }
+
+    auto stopX()
+    {
+        x_velocity = 0;
+    }
+
+public:
     double x = 0;
     double x_velocity = 0;
     double y;
@@ -51,6 +68,7 @@ struct Player
 static Player p;
 static Camera c;
 static AppWindow window;
+static Level l;
 
 static void initialize_lights(void);
 static void initialize_textures(void);
@@ -58,6 +76,23 @@ static void on_display(void);
 static void on_timer(int value);
 static void on_reshape(int width, int height);
 static void on_keyboard(unsigned char key, int x, int y);
+
+static auto exit_game() -> void
+{
+    exit(EXIT_SUCCESS);
+}
+
+static auto lose_game() -> void
+{
+    std::cout << "GAME OVER! Play again?\n";
+    exit_game();
+}
+
+static auto win_game() -> void
+{
+    std::cout << "You WIN!\n";
+    exit_game();
+}
 
 auto &debug_log = std::cout;
 
@@ -74,9 +109,11 @@ auto main(int argc, char **argv) -> int
     glutReshapeFunc(on_reshape);
     glutDisplayFunc(on_display);
 
-    podaci = (float *)malloc(sizeof(double));
-    nivo(&podaci, &n, &min_floor, &max_floor);
-    p.y = podaci[2]; //Igrac pocinje na visini prve podloge.
+    l = level();
+    n = l.number_of_platforms;
+    min_floor = l.min_floor,
+    max_floor = l.max_floor,
+    p.y = l.podaci[0].y; //Igrac pocinje na visini prve podloge.
 
     initialize_textures();
     initialize_lights();
@@ -87,6 +124,56 @@ auto main(int argc, char **argv) -> int
     glutMainLoop();
 
     return 0;
+}
+
+static auto move_on_y_axis(const double dt = 1) -> void
+{
+
+    if (!p.is_jumping && (!p.is_above_platform || p.y > current_floor_y)) // have a margin of error for floor hover.
+    {
+
+        p.is_falling = true;
+        time_in_air += dt / 5; // scale speeds
+        p.y_velocity = GRAVITY * time_in_air;
+        // p.y_velocity += GRAVITY * dt / 5;
+
+        p.y_velocity = std::min(p.y_velocity, TERMINAL_Y_VELOCITY);
+
+        p.y -= p.y_velocity * dt;
+    }
+    else
+    {
+        p.is_falling = false;
+        time_in_air = 0;
+    }
+
+    // TODO: Get delta time and use it for moving.
+
+    if (p.is_jumping && !p.is_falling)
+    {
+        time_in_air += dt / 5; // This is time spent falling!
+        p.y_velocity -= GRAVITY * time_in_air;
+        p.y += p.y_velocity * time_in_air;
+        if (p.y_velocity <= 0)
+        {
+            p.is_falling = true;
+            p.is_jumping = false;
+            time_in_air = 0;
+        }
+    }
+    else
+    {
+        if (p.is_above_platform && p.y <= current_floor_y)
+        {
+            p.is_falling = false;
+            p.is_jumping = false;
+            time_in_air = 0;
+            p.y = current_floor_y;
+            p.y_velocity = JUMP_SPEED;
+        }
+    }
+
+    // debug_log << p.y_velocity << "\n";
 }
 
 static void on_keyboard(unsigned char key, int x, int y)
@@ -101,18 +188,17 @@ static void on_keyboard(unsigned char key, int x, int y)
     case 'q':
     case 'Q':
     case 27:
-        free(podaci);
-        exit(EXIT_SUCCESS);
+        exit_game();
         break;
 
     case 'A':
     case 'a':
-        p.x_velocity = -DEFAULT_X_VELOCITY;
+        p.moveLeft();
         break;
 
     case 'D':
     case 'd':
-        p.x_velocity = DEFAULT_X_VELOCITY;
+        p.moveRight();
         break;
 
     case 'W':
@@ -121,13 +207,13 @@ static void on_keyboard(unsigned char key, int x, int y)
         {
             // debug_log << "Not falling!\n";
             p.is_jumping = true;
-            t = 0;
+            time_in_air = 0;
         }
         break;
 
     case 'S':
     case 's':
-        p.x_velocity = 0;
+        p.stopX();
         break;
 
     case 'J':
@@ -154,58 +240,14 @@ static void on_timer(int value)
         return;
 
     if (p.y <= lava_floor)
-    { //Game over.
-        // game_over();
-        printf("GAME OVER! Play again?\n");
-        free(podaci);
-        exit(EXIT_SUCCESS);
+    {
+        lose_game();
     }
 
     // Move on x axis.
     p.x += p.x_velocity * dt;
 
-    if (!p.is_jumping && (!p.is_above_platform || p.y > current_floor_y)) // have a margin of error for floor hover.
-    {
-
-        p.is_falling = true;
-        t += dt / 5; // scale speeds
-        p.y_velocity = GRAVITY * t;
-
-        p.y_velocity = std::min(p.y_velocity, TERMINAL_Y_VELOCITY);
-
-        p.y -= p.y_velocity * dt;
-    }
-    else
-    {
-        p.is_falling = false;
-        t = 0;
-    }
-
-    // TODO: Get delta time and use it for moving.
-
-    if (p.is_jumping && !p.is_falling)
-    {
-        t += dt / 5; // This is time spent falling!
-        p.y_velocity -= GRAVITY * t;
-        p.y += p.y_velocity * t;
-        if (p.y_velocity <= 0)
-        {
-            p.is_falling = true;
-            p.is_jumping = false;
-            t = 0;
-        }
-    }
-    else
-    {
-        if (p.is_above_platform && p.y <= current_floor_y)
-        {
-            p.is_falling = false;
-            p.is_jumping = false;
-            t = 0;
-            p.y = current_floor_y;
-            p.y_velocity = JUMP_SPEED;
-        }
-    }
+    move_on_y_axis(dt);
 
     glutPostRedisplay();
 
@@ -244,10 +286,10 @@ static void on_display(void)
     int i;
     for (i = 0; i < n; i++)
     {
-        funcMakeBlock(names[1], podaci[3 * i], podaci[3 * i + 1], podaci[3 * i + 2]);
+        funcMakeBlock(names[1], l.podaci[i]);
         if (i == n - 1)
         {
-            funcMakeFinishSign(names[0], podaci[3 * i], podaci[3 * i + 1], podaci[3 * i + 2]);
+            funcMakeFinishSign(names[0], l.podaci[i]);
         }
     }
 
@@ -259,29 +301,29 @@ static void on_display(void)
         {
             last_right_x = current_right_x;
             current_left_x = next_left_x;
-            current_right_x = podaci[3 * d + 1];
-            current_floor_y = podaci[3 * d + 2];
+            current_right_x = l.podaci[d].x_right;
+            current_floor_y = l.podaci[d].y;
             next_left_x = current_right_x + 1000;
 
             d_change_flag = 0;
         }
         else
         {
-            next_left_x = podaci[3 * (d + 1)];
-            current_left_x = podaci[3 * d];
-            current_right_x = podaci[3 * d + 1];
-            current_floor_y = podaci[3 * d + 2];
-            next_floor = podaci[3 * (d + 1) + 2];
+            next_left_x = l.podaci[d + 1].x_left;
+            current_left_x = l.podaci[d].x_left;
+            current_right_x = l.podaci[d].x_right;
+            current_floor_y = l.podaci[d].y;
+            next_floor = l.podaci[d + 1].y;
 
             if (d == 0)
             {
-                last_right_x = current_left_x - 10;
+                last_right_x = current_left_x - 10; // TODO
                 last_floor = lava_floor;
             }
             else
             {
-                last_right_x = podaci[3 * (d - 1) + 1];
-                last_floor = podaci[3 * (d - 1) + 2];
+                last_right_x = l.podaci[d - 1].x_right;
+                last_floor = l.podaci[d - 1].y;
             }
 
             d_change_flag = 0;
@@ -357,9 +399,7 @@ static void on_display(void)
 
     if (d == (n - 1) && p.y == current_floor_y)
     {
-        free(podaci);
-        printf("You WIN!\n");
-        exit(EXIT_SUCCESS);
+        win_game();
     }
 
     //Model igraca.
@@ -373,7 +413,10 @@ static void on_display(void)
 
     lava_floor = min_floor - 0.5;
 
-    funcMakeBackground(names[2], names[3], podaci[0] - 20, podaci[3 * n - 2] + 30, lava_floor, max_floor + 10, -6, 8);
+    funcMakeBackground(names[2],
+                       names[3],
+                       l.podaci[0].x_left - 20, l.podaci.back().x_right + 30,
+                       lava_floor, max_floor + 10, -6, 8);
 
     glutSwapBuffers();
 }

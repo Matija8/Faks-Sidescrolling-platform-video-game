@@ -6,20 +6,25 @@ CFLAGS 	= $(WFLAGS) $(HINCLUDES)
 LDFLAGS = -L/usr/X11R6/lib -L/usr/pkg/lib
 LDLIBS 	= -lglut -lGLU -lGL
 
-$(PROGRAM): game.o image.o functions.o window.o
+MAKE_OBJECT_FILE = $(CXX) $(CFLAGS) $< -c $(LDLIBS)
+
+$(PROGRAM): game.o level.o functions.o image.o window.o
 	$(CXX) $(HINCLUDES) $(LDFLAGS) $^ $(LDLIBS) -o $(PROGRAM)
 
 game.o: game.cpp constants.h window.h error_handling.h
-	$(CXX) $(CFLAGS) $< -c $(LDLIBS)
+	$(MAKE_OBJECT_FILE)
 
-image.o: image.c
-	$(CXX) $(CFLAGS) $< -c $(LDLIBS)
+level.o: level.cpp level.h
+	$(MAKE_OBJECT_FILE)
 
-functions.o: functions.cpp
-	$(CXX) $(CFLAGS) $< -c $(LDLIBS)
+functions.o: functions.cpp functions.h
+	$(MAKE_OBJECT_FILE)
+
+image.o: image.c image.h
+	$(MAKE_OBJECT_FILE)
 
 window.o: window.cpp window.h
-	$(CXX) $(CFLAGS) $< -c $(LDLIBS)
+	$(MAKE_OBJECT_FILE)
 
 .PHONY: clean
 

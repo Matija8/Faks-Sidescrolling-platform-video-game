@@ -24,7 +24,7 @@ auto AppWindow::toggleFullScreen() noexcept -> void
     }
 }
 
-auto AppWindow::onReshape(unsigned width, unsigned height) -> void
+auto AppWindow::onReshape(unsigned width, unsigned height) noexcept -> void
 {
     if (!m_is_fullscreen)
         setDimensions(width, height);

@@ -1,10 +1,14 @@
 #pragma once
 
+#include "level.h"
+
 auto funcMakeBlock(
     GLuint names,
-    float min_x,
-    float max_x,
-    float floor_y) -> void;
+    Platform platform) -> void;
+
+auto funcMakeFinishSign(
+    GLuint name,
+    Platform platform) -> void;
 
 auto funcMakeBackground(
     GLuint name1,
@@ -17,15 +21,3 @@ auto funcMakeBackground(
     float near_z) -> void;
 
 auto funcMakePlayer(void) -> void;
-
-auto nivo(
-    float **podaci,
-    int *br,
-    float *min_floor,
-    float *max_floor) -> void;
-
-auto funcMakeFinishSign(
-    GLuint name,
-    float min_x,
-    float max_x,
-    float floor_y) -> void;

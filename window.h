@@ -8,7 +8,7 @@ private:
 public:
     auto initWindow() noexcept -> void;
     auto toggleFullScreen() noexcept -> void;
-    auto onReshape(unsigned width, unsigned height) -> void;
+    auto onReshape(unsigned width, unsigned height) noexcept -> void;
 
 private:
     auto setDimensions(unsigned width, unsigned height) noexcept -> void;
