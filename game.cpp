@@ -1,5 +1,6 @@
+#include "game.h"
+
 #include <iostream>
-#include <algorithm>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -41,46 +42,11 @@ struct Camera
 static Player player;
 static Camera camera;
 static AppWindow window;
-static Level level;
-
-auto on_display() -> void;
-auto on_update() -> void;
-auto platform_checking() -> void;
-auto on_timer(int value) -> void;
-auto on_reshape(int width, int height) -> void;
-auto on_keyboard(unsigned char key, int x, int y) -> void;
+static Platforms platforms;
 
 auto &debug_log = std::cout;
 
-auto get_y_vals_from_platforms(
-    const std::vector<Platform> &platforms) -> std::vector<double>;
-
-auto get_min_y_val_from_platforms(const std::vector<Platform> &platforms) -> double
-{
-    assertIsTrueElseThrow(platforms.size() > 0);
-    const std::vector<double> platform_y_vals = get_y_vals_from_platforms(platforms);
-    return *(std::min_element(platform_y_vals.begin(), platform_y_vals.end()));
-}
-auto get_max_y_val_from_platforms(const std::vector<Platform> &platforms) -> double
-{
-    assertIsTrueElseThrow(platforms.size() > 0);
-    const std::vector<double> platform_y_vals = get_y_vals_from_platforms(platforms);
-    return *(std::max_element(platform_y_vals.begin(), platform_y_vals.end()));
-}
-
-auto get_y_vals_from_platforms(
-    const std::vector<Platform> &platforms) -> std::vector<double>
-{
-    std::vector<double> platform_y_vals(platforms.size());
-    std::transform(
-        platforms.begin(), platforms.end(),
-        platform_y_vals.begin(),
-        [](const Platform &platform) noexcept -> double {
-            return platform.y;
-        });
-
-    return platform_y_vals;
-}
+// TODO: Pull out main into seperate file (main.cpp).
 
 auto main(int argc, char **argv) -> int
 {
@@ -95,10 +61,7 @@ auto main(int argc, char **argv) -> int
     glutReshapeFunc(on_reshape);
     glutDisplayFunc(on_display);
 
-    level = {get_platforms(".nivo.txt")};
-    assertIsTrueElseThrow(level.podaci.size() > 0);
-
-    player.y_coord = level.podaci[0].y; //Igrac pocinje na visini prve podloge.
+    init_entities(platforms, player);
 
     initialize_textures();
     initialize_lights();
@@ -109,6 +72,16 @@ auto main(int argc, char **argv) -> int
     glutMainLoop();
 
     return 0;
+}
+
+
+auto init_entities(Platforms &platforms, Player &player) -> void
+{
+    platforms = get_platforms(".nivo.txt");
+    assertIsTrueElseThrow(platforms.size() > 0);
+
+    player.y_coord = platforms[0].y;
+    player.x_coord = (platforms[0].x_left + platforms[0].x_right) / 2;
 }
 
 auto on_keyboard(unsigned char key, int x, int y) -> void
@@ -206,25 +179,25 @@ auto on_reshape(int width, int height) -> void
 auto platform_checking() -> void
 { // TODO
 
-    if (what_is_d >= 0 && what_is_d < level.podaci.size() && d_change_flag == 1)
+    if (what_is_d >= 0 && what_is_d < platforms.size() && d_change_flag == 1)
     {
-        if (what_is_d == level.podaci.size() - 1)
+        if (what_is_d == platforms.size() - 1)
         {
             last_right_x = current_right_x;
             current_left_x = next_left_x;
-            current_right_x = level.podaci[what_is_d].x_right;
-            current_floor_y = level.podaci[what_is_d].y;
+            current_right_x = platforms[what_is_d].x_right;
+            current_floor_y = platforms[what_is_d].y;
             next_left_x = current_right_x + 1000;
 
             d_change_flag = 0;
         }
         else
         {
-            next_left_x = level.podaci[what_is_d + 1].x_left;
-            current_left_x = level.podaci[what_is_d].x_left;
-            current_right_x = level.podaci[what_is_d].x_right;
-            current_floor_y = level.podaci[what_is_d].y;
-            next_floor = level.podaci[what_is_d + 1].y;
+            next_left_x = platforms[what_is_d + 1].x_left;
+            current_left_x = platforms[what_is_d].x_left;
+            current_right_x = platforms[what_is_d].x_right;
+            current_floor_y = platforms[what_is_d].y;
+            next_floor = platforms[what_is_d + 1].y;
 
             if (what_is_d == 0)
             {
@@ -233,8 +206,8 @@ auto platform_checking() -> void
             }
             else
             {
-                last_right_x = level.podaci[what_is_d - 1].x_right;
-                last_floor = level.podaci[what_is_d - 1].y;
+                last_right_x = platforms[what_is_d - 1].x_right;
+                last_floor = platforms[what_is_d - 1].y;
             }
 
             d_change_flag = 0;
@@ -309,7 +282,7 @@ auto platform_checking() -> void
 
     //Stigli smo na kraj.
 
-    if (what_is_d == (level.podaci.size() - 1) && player.y_coord == current_floor_y)
+    if (what_is_d == (platforms.size() - 1) && player.y_coord == current_floor_y)
     {
         win_game();
     }
@@ -335,25 +308,25 @@ auto on_display() -> void
 
     //Dodajemo pozadinu.
 
-    static const double min_floor = get_min_y_val_from_platforms(level.podaci),
-                        max_floor = get_max_y_val_from_platforms(level.podaci);
+    static const double min_floor = get_min_y_val_from_platforms(platforms),
+                        max_floor = get_max_y_val_from_platforms(platforms);
 
     lava_floor = min_floor - 0.5;
 
     funcMakeBackground(
         names[2],
         names[3],
-        level.podaci[0].x_left - 20, level.podaci.back().x_right + 30,
+        platforms[0].x_left - 20, platforms.back().x_right + 30,
         lava_floor, max_floor + 10, -6, 8);
 
     //Pravimo podloge.
 
-    for (Platform platform : level.podaci)
+    for (Platform platform : platforms)
     {
         funcMakeBlock(names[1], platform);
     }
 
-    funcMakeFinishSign(names[0], level.podaci.back());
+    funcMakeFinishSign(names[0], platforms.back());
 
     //Model igraca.
 
