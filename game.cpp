@@ -8,10 +8,10 @@
 #include "error_handling.h"
 #include "functions.h"
 #include "level.h"
-#include "image.h"
+#include "textures.h"
 #include "window.h"
 
-static GLuint names[4]; // Teksture.
+GLuint names[4]; // Teksture.
 static float lava_floor;
 static bool animation_ongoing = true;
 
@@ -69,29 +69,10 @@ static Camera camera;
 static AppWindow window;
 static Level level;
 
-static void initialize_lights(void);
-static void initialize_textures(void);
-static void on_display(void);
-static void on_timer(int value);
-static void on_reshape(int width, int height);
-static void on_keyboard(unsigned char key, int x, int y);
-
-static auto exit_game() -> void
-{
-    exit(EXIT_SUCCESS);
-}
-
-static auto lose_game() -> void
-{
-    std::cout << "GAME OVER! Play again?\n";
-    exit_game();
-}
-
-static auto win_game() -> void
-{
-    std::cout << "You WIN!\n";
-    exit_game();
-}
+auto on_display() -> void;
+auto on_timer(int value) -> void;
+auto on_reshape(int width, int height) -> void;
+auto on_keyboard(unsigned char key, int x, int y) -> void;
 
 auto &debug_log = std::cout;
 
@@ -124,7 +105,7 @@ auto main(int argc, char **argv) -> int
     return 0;
 }
 
-static auto move_on_y_axis(const double dt = 1) -> void
+auto move_on_y_axis(const double dt = 1) -> void
 {
 
     if (!player.is_jumping && (!player.is_above_platform || player.y_coord > current_floor_y)) // have a margin of error for floor hover.
@@ -174,7 +155,8 @@ static auto move_on_y_axis(const double dt = 1) -> void
     // debug_log << p.y_velocity << "\n";
 }
 
-static void on_keyboard(unsigned char key, int x, int y)
+
+auto on_keyboard(unsigned char key, int x, int y) -> void
 {
     (void)x;
     (void)y;
@@ -230,7 +212,8 @@ static void on_keyboard(unsigned char key, int x, int y)
     }
 }
 
-static void on_timer(int value)
+
+auto on_timer(int value) -> void
 {
     const double dt = 1;
 
@@ -253,15 +236,15 @@ static void on_timer(int value)
         glutTimerFunc(TIMER_INTERVAL, on_timer, TIMER_ID);
 }
 
-//Kod preuzet sa vezbi asistenta Ivana Cukica. Primer Cube.
-static void on_reshape(int width, int height)
+auto on_reshape(int width, int height) -> void
 {
     assertIsTrueElseThrow(width >= 0 && height >= 0);
 
     window.onReshape(width, height);
 }
 
-static void on_display(void)
+
+auto on_display() -> void
 {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -269,7 +252,7 @@ static void on_display(void)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    camera.x = player.x_coord; // Camera is focused on player?
+    camera.x = player.x_coord;
 
     camera.y = std::max(camera.y, player.y_coord - 1);
     camera.y = std::min(camera.y, player.y_coord + 1);
@@ -411,126 +394,11 @@ static void on_display(void)
 
     lava_floor = min_floor - 0.5;
 
-    funcMakeBackground(names[2],
-                       names[3],
-                       level.podaci[0].x_left - 20, level.podaci.back().x_right + 30,
-                       lava_floor, max_floor + 10, -6, 8);
+    funcMakeBackground(
+        names[2],
+        names[3],
+        level.podaci[0].x_left - 20, level.podaci.back().x_right + 30,
+        lava_floor, max_floor + 10, -6, 8);
 
     glutSwapBuffers();
-}
-
-//Teksture. Namerno odvojene od ostatka koda.
-//kod preuzet sa vezbi asistenta Ivana Cukica i modifikovan.
-
-static void initialize_textures(void)
-{
-    /* Objekat koji predstavlja teskturu ucitanu iz fajla. */
-    Image *image;
-
-    /* Ukljucuju se teksture. */
-    glEnable(GL_TEXTURE_2D);
-
-    glTexEnvf(GL_TEXTURE_ENV,
-              GL_TEXTURE_ENV_MODE,
-              GL_REPLACE);
-
-    /*
-     * Inicijalizuje se objekat koji ce sadrzati teksture ucitane iz
-     * fajla.
-     */
-    image = image_init(0, 0);
-
-    /* Generisu se identifikatori tekstura. */
-    glGenTextures(4, names);
-
-    /* Kreira se tekstura zid. */
-    image_read(image, BMP_WALL);
-
-    glBindTexture(GL_TEXTURE_2D, names[0]);
-    glTexParameteri(GL_TEXTURE_2D,
-                    GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D,
-                    GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-                 image->width, image->height, 0,
-                 GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
-
-    /* Kreira se tekstura trava. */
-    image_read(image, BMP_GRASS);
-
-    glBindTexture(GL_TEXTURE_2D, names[1]);
-    glTexParameteri(GL_TEXTURE_2D,
-                    GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D,
-                    GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-                 image->width, image->height, 0,
-                 GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
-
-    /* Kreira se tekstura pozadina. */
-    image_read(image, BMP_BACKGROUND);
-
-    glBindTexture(GL_TEXTURE_2D, names[2]);
-    glTexParameteri(GL_TEXTURE_2D,
-                    GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D,
-                    GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-                 image->width, image->height, 0,
-                 GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
-
-    /* Kreira se tekstura lava. */
-    image_read(image, BMP_LAVA);
-
-    glBindTexture(GL_TEXTURE_2D, names[3]);
-    glTexParameteri(GL_TEXTURE_2D,
-                    GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D,
-                    GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-                 image->width, image->height, 0,
-                 GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
-
-    /* Iskljucujemo aktivnu teksturu */
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    /* Unistava se objekat za citanje tekstura iz fajla. */
-    image_done(image);
-
-    /* Inicijalizujemo matricu rotacije. */
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-}
-
-//Osvetljenje. Namerno odvojene od ostatka koda.
-//kod preuzet sa vezbi asistenta Ivana Cukica i modifikovan.
-
-static void initialize_lights(void)
-{
-    /* Pozicija svetla (u pitanju je direkcionalno svetlo). */
-    GLfloat light_position[] = {1, 10, 5, 0};
-
-    /* Ambijentalna boja svetla. */
-    GLfloat light_ambient[] = {0.1, 0.1, 0.1, 1};
-
-    /* Difuzna boja svetla. */
-    GLfloat light_diffuse[] = {0.7, 0.7, 0.7, 1};
-
-    /* Spekularna boja svetla. */
-    GLfloat light_specular[] = {0.9, 0.9, 0.9, 1};
-
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-    glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
 }

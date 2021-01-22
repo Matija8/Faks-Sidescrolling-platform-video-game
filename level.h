@@ -12,11 +12,15 @@ struct Platform
 
 struct Level
 {
-    // float *podaci;
     std::vector<Platform> podaci;
-    unsigned number_of_platforms;
     double min_floor,
         max_floor;
 };
 
 auto get_level(const std::string &file_with_level_data) -> Level;
+
+auto lose_game() -> void;
+
+auto win_game() -> void;
+
+auto exit_game() -> void;
