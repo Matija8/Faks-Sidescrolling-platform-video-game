@@ -1,8 +1,6 @@
 #include "game.h"
 
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include <GL/glut.h>
 
@@ -22,16 +20,9 @@ static bool animation_ongoing = true;
 
 double time_in_air = 0; // Vreme.
 
-double current_floor_y; // Vrednost y-koordinate podloge ispod igraca (ne nuzno poda).
+double current_floor_y; // TODO
 
-static size_t what_is_d = 0;
-static int d_change_flag = 1;
-static double current_right_x, // Pozicije ivica trenutnog bloka.
-    current_left_x,
-    next_left_x, // Pozicije ivica sledeceg/proslog bloka.
-    last_right_x,
-    next_floor, // Vrednost y-koordinate sledece podloge.
-    last_floor;
+static size_t current_platform_index = 0;
 
 struct Camera
 {
@@ -73,7 +64,6 @@ auto main(int argc, char **argv) -> int
 
     return 0;
 }
-
 
 auto init_entities(Platforms &platforms, Player &player) -> void
 {
@@ -159,7 +149,7 @@ auto on_update() -> void
         lose_game();
     }
 
-    platform_checking();
+    platform_checking(platforms);
 
     const double dt = 1;
 
@@ -176,45 +166,38 @@ auto on_reshape(int width, int height) -> void
     window.on_reshape(width, height);
 }
 
-auto platform_checking() -> void
+auto platform_checking(Platforms platforms) -> void
 { // TODO
 
-    if (what_is_d >= 0 && what_is_d < platforms.size() && d_change_flag == 1)
-    {
-        if (what_is_d == platforms.size() - 1)
-        {
-            last_right_x = current_right_x;
-            current_left_x = next_left_x;
-            current_right_x = platforms[what_is_d].x_right;
-            current_floor_y = platforms[what_is_d].y;
-            next_left_x = current_right_x + 1000;
+    assertIsTrueElseThrow(platforms.size() > 0);
 
-            d_change_flag = 0;
-        }
-        else
-        {
-            next_left_x = platforms[what_is_d + 1].x_left;
-            current_left_x = platforms[what_is_d].x_left;
-            current_right_x = platforms[what_is_d].x_right;
-            current_floor_y = platforms[what_is_d].y;
-            next_floor = platforms[what_is_d + 1].y;
+    assertIsTrueElseThrow(current_platform_index < platforms.size());
 
-            if (what_is_d == 0)
-            {
-                last_right_x = current_left_x - 10; // TODO
-                last_floor = lava_floor;
-            }
-            else
-            {
-                last_right_x = platforms[what_is_d - 1].x_right;
-                last_floor = platforms[what_is_d - 1].y;
-            }
+    auto current_platform = platforms[current_platform_index];
 
-            d_change_flag = 0;
-        }
-        /*printf("promena vred: floor %.0f, last edge %.0f, left %.0f, right %.0f, next edge %.0f\n",
-            current_floor, last_right_x, current_left_x, current_right_x, next_left_x);*/
-    }
+    current_floor_y = current_platform.y;
+    const double current_left_x = current_platform.x_left;
+    const double current_right_x = current_platform.x_right;
+
+    const double far_away_left = platforms.front().x_left - 100000,
+                 far_away_right = platforms.back().x_right + 100000,
+                 below_lava = lava_floor - 1;
+
+    const double last_right_x = current_platform_index != 0
+                                    ? platforms[current_platform_index - 1].x_right
+                                    : far_away_left;
+
+    const double next_left_x = current_platform_index < (platforms.size() - 1)
+                                   ? platforms[current_platform_index + 1].x_left
+                                   : far_away_right;
+
+    const double last_floor = current_platform_index != 0
+                                  ? platforms[current_platform_index - 1].y
+                                  : below_lava;
+
+    const double next_floor = current_platform_index < (platforms.size() - 1)
+                                  ? platforms[current_platform_index + 1].y
+                                  : below_lava;
 
     // Provere propadanja.Leva ivica igraca je x_cam-0.2.Desna ivica igraca je x_cam-0.2.
 
@@ -253,8 +236,7 @@ auto platform_checking() -> void
 
     if (player.x_coord + 0.2 >= next_left_x && player.y_coord >= next_floor)
     {
-        d_change_flag = 1;
-        what_is_d++;
+        current_platform_index++;
     }
     if (player.x_coord + 0.2 >= next_left_x && player.y_coord < next_floor)
     {
@@ -268,9 +250,8 @@ auto platform_checking() -> void
 
     if (player.x_coord - 0.2 <= last_right_x && player.y_coord >= last_floor)
     {
-        assertIsTrueElseThrow(what_is_d > 0);
-        d_change_flag = 1;
-        what_is_d--;
+        assertIsTrueElseThrow(current_platform_index > 0);
+        current_platform_index--;
     }
     if (player.x_coord - 0.2 <= last_right_x && player.y_coord < last_floor)
     {
@@ -282,7 +263,7 @@ auto platform_checking() -> void
 
     //Stigli smo na kraj.
 
-    if (what_is_d == (platforms.size() - 1) && player.y_coord == current_floor_y)
+    if (current_platform_index == (platforms.size() - 1) && player.y_coord == current_floor_y)
     {
         win_game();
     }
@@ -316,7 +297,7 @@ auto on_display() -> void
     funcMakeBackground(
         names[2],
         names[3],
-        platforms[0].x_left - 20, platforms.back().x_right + 30,
+        platforms[0].x_left - 100, platforms.back().x_right + 100,
         lava_floor, max_floor + 10, -6, 8);
 
     //Pravimo podloge.

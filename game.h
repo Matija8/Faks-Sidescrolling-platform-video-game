@@ -5,7 +5,7 @@
 
 auto on_display() -> void;
 auto on_update() -> void;
-auto platform_checking() -> void;
+auto platform_checking(Platforms platforms) -> void;
 auto on_timer(int value) -> void;
 auto on_reshape(int width, int height) -> void;
 auto on_keyboard(unsigned char key, int x, int y) -> void;
