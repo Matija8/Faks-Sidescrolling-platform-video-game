@@ -1,9 +1,12 @@
 #pragma once
 
-constexpr double JUMP_SPEED = 0.5,
-                 GRAVITY = 0.07,
+constexpr double JUMP_SPEED = 0.2,
+                 GRAVITY = 0.01,
                  DEFAULT_X_VELOCITY = 0.1,
-                 TERMINAL_Y_VELOCITY = 0.5;
+                 TERMINAL_FALL_VELOCITY = 1.5,
+                 LATERAL_ACCELERATION = 0.015,
+                 LATERAL_DECCELERATION = 0.01,
+                 MAX_LATERAL_PLAYER_SPEED = 0.13;
 
 constexpr int TIMER_ID = 0;
 constexpr unsigned TIMER_INTERVAL = 20;

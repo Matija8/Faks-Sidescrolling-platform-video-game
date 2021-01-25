@@ -1,6 +1,10 @@
 #pragma once
 
+#include "level.h"
 #include "constants.h"
+
+constexpr double PLAYER_EDGE = 0.2,
+                 PLAYER_HEIGHT = 1.8;
 
 struct Player
 {
@@ -12,16 +16,19 @@ struct Player
 
     auto jump() -> void;
 
-    auto move_on_y_axis(const double dt = 1) -> void;
+    auto move(const Platforms &platforms, const double dt) -> void;
+
+    auto move_on_x_axis(const Platforms &platforms, const double dt) -> void;
+
+    auto move_on_y_axis(const Platforms &platforms, const double dt) -> void;
 
 public:
     double x_coord = 0,
            x_velocity = 0,
-           y_coord,
-           y_velocity = JUMP_SPEED; // TODO
+           x_acc = 0,
+           y_coord = 0,
+           y_velocity = 0;
 
-    bool is_jumping = false,
-         is_moving = false,
-         is_falling = false,
-         is_above_platform = true;
+    bool is_in_air = false,
+         is_stopping = true;
 };

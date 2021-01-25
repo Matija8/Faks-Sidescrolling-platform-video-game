@@ -18,12 +18,6 @@ GLuint names[4]; // Teksture.
 static float lava_floor;
 static bool animation_ongoing = true;
 
-double time_in_air = 0; // Vreme.
-
-double current_floor_y; // TODO
-
-static size_t current_platform_index = 0;
-
 struct Camera
 {
     double x = 0;
@@ -41,6 +35,8 @@ auto &debug_log = std::cout;
 
 auto main(int argc, char **argv) -> int
 {
+    init_entities(platforms, player);
+
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 
@@ -51,8 +47,6 @@ auto main(int argc, char **argv) -> int
     glutKeyboardFunc(on_keyboard);
     glutReshapeFunc(on_reshape);
     glutDisplayFunc(on_display);
-
-    init_entities(platforms, player);
 
     initialize_textures();
     initialize_lights();
@@ -67,7 +61,7 @@ auto main(int argc, char **argv) -> int
 
 auto init_entities(Platforms &platforms, Player &player) -> void
 {
-    platforms = get_platforms(".nivo.txt");
+    platforms = get_platforms(".level.txt");
     assertIsTrueElseThrow(platforms.size() > 0);
 
     player.y_coord = platforms[0].y;
@@ -122,6 +116,12 @@ auto on_keyboard(unsigned char key, int x, int y) -> void
     case 'F':
     case 'f':
         window.toggle_fullscreen();
+        break;
+
+    case 'P':
+    case 'p':
+        animation_ongoing = !animation_ongoing;
+        break;
     }
 }
 
@@ -131,17 +131,18 @@ auto on_timer(int value) -> void
     if (value != TIMER_ID)
         return;
 
-    // TODO
-    on_update();
-    // on_render()
+    glutTimerFunc(TIMER_INTERVAL, on_timer, TIMER_ID);
 
-    glutPostRedisplay();
+    if (!animation_ongoing)
+        return;
 
-    if (animation_ongoing)
-        glutTimerFunc(TIMER_INTERVAL, on_timer, TIMER_ID);
+    const double dt = 1;
+
+    on_update(dt);
+    on_render();
 }
 
-auto on_update() -> void
+auto on_update(const double dt) -> void
 {
 
     if (player.y_coord <= lava_floor)
@@ -149,14 +150,20 @@ auto on_update() -> void
         lose_game();
     }
 
-    platform_checking(platforms);
+    static const Platform &last_platform = platforms.back();
 
-    const double dt = 1;
+    if (player.y_coord == last_platform.y && player.x_coord - PLAYER_EDGE >= last_platform.x_left && player.x_coord + PLAYER_EDGE <= last_platform.x_right)
+    {
+        win_game();
+    }
 
-    // Move on x axis.
-    player.x_coord += player.x_velocity * dt;
+    player.move(platforms, dt);
+}
 
-    player.move_on_y_axis(dt);
+auto on_render() noexcept -> void
+{
+
+    glutPostRedisplay();
 }
 
 auto on_reshape(int width, int height) -> void
@@ -165,110 +172,6 @@ auto on_reshape(int width, int height) -> void
 
     window.on_reshape(width, height);
 }
-
-auto platform_checking(Platforms platforms) -> void
-{ // TODO
-
-    assertIsTrueElseThrow(platforms.size() > 0);
-
-    assertIsTrueElseThrow(current_platform_index < platforms.size());
-
-    auto current_platform = platforms[current_platform_index];
-
-    current_floor_y = current_platform.y;
-    const double current_left_x = current_platform.x_left;
-    const double current_right_x = current_platform.x_right;
-
-    const double far_away_left = platforms.front().x_left - 100000,
-                 far_away_right = platforms.back().x_right + 100000,
-                 below_lava = lava_floor - 1;
-
-    const double last_right_x = current_platform_index != 0
-                                    ? platforms[current_platform_index - 1].x_right
-                                    : far_away_left;
-
-    const double next_left_x = current_platform_index < (platforms.size() - 1)
-                                   ? platforms[current_platform_index + 1].x_left
-                                   : far_away_right;
-
-    const double last_floor = current_platform_index != 0
-                                  ? platforms[current_platform_index - 1].y
-                                  : below_lava;
-
-    const double next_floor = current_platform_index < (platforms.size() - 1)
-                                  ? platforms[current_platform_index + 1].y
-                                  : below_lava;
-
-    // Provere propadanja.Leva ivica igraca je x_cam-0.2.Desna ivica igraca je x_cam-0.2.
-
-    //Na trenutnoj podlozi smo.
-
-    if (player.x_coord + 0.2 >= current_left_x && player.x_coord - 0.2 <= current_right_x && player.y_coord >= current_floor_y)
-    {
-        player.is_above_platform = true;
-    }
-
-    const bool is_falling_left = player.x_coord + 0.2 < current_left_x && player.x_coord - 0.2 > last_right_x,
-               is_falling_right = player.x_coord - 0.2 > current_right_x && player.x_coord + 0.2 < next_left_x;
-
-    if (is_falling_left || is_falling_right)
-    {
-        player.is_above_platform = false;
-    }
-
-    //provera da li se zakucavamo u trenutnu podlogu kad propadamo.
-
-    if (player.x_coord + 0.2 >= current_left_x && player.x_coord - 0.2 <= current_right_x && player.y_coord < current_floor_y)
-    {
-
-        if (player.y_coord > current_floor_y - 1.8)
-        {
-
-            if (player.x_velocity > 0 && player.x_coord < current_left_x + 0.2)
-                player.x_coord = current_left_x - 0.2;
-
-            if (player.x_velocity < 0 && player.x_coord > current_right_x - 0.2)
-                player.x_coord = current_right_x + 0.2;
-        }
-    }
-
-    //Stigli smo do sledece podloge.
-
-    if (player.x_coord + 0.2 >= next_left_x && player.y_coord >= next_floor)
-    {
-        current_platform_index++;
-    }
-    if (player.x_coord + 0.2 >= next_left_x && player.y_coord < next_floor)
-    {
-        if (player.y_coord > next_floor - 1.8)
-        { //Igrac je visok 0.8. Podloga je visine 1.
-            player.x_coord = next_left_x - 0.2;
-        }
-    }
-
-    //Vratili smo se na prethodnu podlogu.
-
-    if (player.x_coord - 0.2 <= last_right_x && player.y_coord >= last_floor)
-    {
-        assertIsTrueElseThrow(current_platform_index > 0);
-        current_platform_index--;
-    }
-    if (player.x_coord - 0.2 <= last_right_x && player.y_coord < last_floor)
-    {
-        if (player.y_coord > last_floor - 1.8)
-        {
-            player.x_coord = last_right_x + 0.2;
-        }
-    }
-
-    //Stigli smo na kraj.
-
-    if (current_platform_index == (platforms.size() - 1) && player.y_coord == current_floor_y)
-    {
-        win_game();
-    }
-}
-
 auto on_display() -> void
 {
 

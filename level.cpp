@@ -14,25 +14,25 @@ auto get_platforms(const std::string &file_with_level_data) -> std::vector<Platf
     std::ifstream f(file_with_level_data);
 
     if (!f)
-        throw std::logic_error("TODO Message");
+        throw std::logic_error("No file!");
 
-    size_t number_of_platforms;
-    f >> number_of_platforms;
-    if (number_of_platforms < 2)
-        throw std::logic_error("TODO Message");
-
-    for (size_t i = 0; i < number_of_platforms; i++)
+    while (f)
     {
-        double min_platform_x_coord,
-            max_platform_x_coord,
-            platform_y_coord;
+        Platform p;
 
-        f >> min_platform_x_coord >>
-            max_platform_x_coord >>
-            platform_y_coord;
+        f >> p.x_left >>
+            p.x_right >>
+            p.y;
 
-        platforms.push_back({min_platform_x_coord, max_platform_x_coord, platform_y_coord});
+        if (!f)
+            break;
+
+        platforms.push_back(p);
     }
+
+
+    if (platforms.size() < 2)
+        throw std::logic_error("Not enough platforms!");
 
     return platforms;
 }
