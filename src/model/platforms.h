@@ -21,6 +21,8 @@ auto get_max_y_val_from_platforms(const std::vector<Platform> &platforms) -> dou
 auto get_y_vals_from_platforms(
     const std::vector<Platform> &platforms) -> std::vector<double>;
 
+// TODO: Move to game.
+
 auto lose_game() -> void;
 
 auto win_game() -> void;

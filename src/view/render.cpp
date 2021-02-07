@@ -1,8 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "./render.h"
+
+#include "./image.h"
+
 #include <GL/glut.h>
-#include "image.h"
-#include "functions.h"
 
 //podaci za materijal
 GLfloat light_position[] = {1, 1, 1, 0};
@@ -16,8 +16,20 @@ GLfloat low_shininess[] = {5};
 GLfloat high_shininess[] = {100};
 GLfloat material_emission[] = {0.3, 0.2, 0.2, 0};
 
-auto funcMakeBlock(
-    GLuint names,
+// TODO: Remove duplication in making quads.
+
+auto bindActiveTexture(unsigned texture_index)
+{
+    glBindTexture(GL_TEXTURE_2D, texture_index);
+}
+
+auto unbindActiveTexture()
+{
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+auto renderPlatform(
+    unsigned platform_texture_index,
     Platform platform) -> void
 {
 
@@ -25,9 +37,10 @@ auto funcMakeBlock(
                   max_x = platform.x_right,
                   y = platform.y;
 
+    bindActiveTexture(platform_texture_index);
+
     //pravimo podlogu
 
-    glBindTexture(GL_TEXTURE_2D, names);
     glBegin(GL_QUADS);
     glNormal3f(0, 1, 0);
 
@@ -46,7 +59,6 @@ auto funcMakeBlock(
 
     //pravimo prednju ivicu podloge
 
-    glBindTexture(GL_TEXTURE_2D, names);
     glBegin(GL_QUADS);
     glNormal3f(0, 0, 1);
 
@@ -65,7 +77,6 @@ auto funcMakeBlock(
 
     //leva ivica
 
-    glBindTexture(GL_TEXTURE_2D, names);
     glBegin(GL_QUADS);
     glNormal3f(-1, 0, 0);
 
@@ -84,7 +95,6 @@ auto funcMakeBlock(
 
     //desna ivica
 
-    glBindTexture(GL_TEXTURE_2D, names);
     glBegin(GL_QUADS);
     glNormal3f(1, 0, 0);
 
@@ -101,11 +111,11 @@ auto funcMakeBlock(
     glVertex3f(max_x, y, -1);
     glEnd();
 
-    glBindTexture(GL_TEXTURE_2D, 0); //iskljucujemo aktivnu teksturu
+    unbindActiveTexture();
 }
 
-auto funcMakeFinishSign(
-    GLuint name,
+auto renderFinishSign(
+    unsigned wall_texture_index,
     Platform platform) -> void
 {
 
@@ -113,9 +123,10 @@ auto funcMakeFinishSign(
             max_x = platform.x_right,
             floor_y = platform.y;
 
-    glBindTexture(GL_TEXTURE_2D, name);
+    glBindTexture(GL_TEXTURE_2D, wall_texture_index);
 
-    glBegin(GL_QUADS); //prednji deo
+    // Front
+    glBegin(GL_QUADS);
     glNormal3f(0, 0, 1);
 
     glTexCoord2f(0, 0);
@@ -131,7 +142,8 @@ auto funcMakeFinishSign(
     glVertex3f(min_x, floor_y + 2, -0.5);
     glEnd();
 
-    glBegin(GL_QUADS); //gornji deo
+    // Top
+    glBegin(GL_QUADS);
     glNormal3f(0, 0, 1);
 
     glTexCoord2f(0, 0);
@@ -147,7 +159,8 @@ auto funcMakeFinishSign(
     glVertex3f(min_x, floor_y + 2, -1);
     glEnd();
 
-    glBegin(GL_QUADS); //levi deo
+    // Left
+    glBegin(GL_QUADS);
     glNormal3f(-1, 0, 0);
 
     glTexCoord2f(12, 6);
@@ -163,7 +176,8 @@ auto funcMakeFinishSign(
     glVertex3f(min_x, floor_y, -1);
     glEnd();
 
-    glBegin(GL_QUADS); //desni deo
+    // Right
+    glBegin(GL_QUADS);
     glNormal3f(1, 0, 0);
 
     glTexCoord2f(12, 6);
@@ -179,16 +193,18 @@ auto funcMakeFinishSign(
     glVertex3f(max_x, floor_y, -1);
     glEnd();
 
-    glBindTexture(GL_TEXTURE_2D, 0); //iskljucujemo aktivnu teksturu
+    unbindActiveTexture();
 }
 
-void funcMakeBackground(
-    GLuint name1, GLuint name2, float min_x, float max_x,
+void renderBackground(
+    unsigned name1, unsigned name2, float min_x, float max_x,
     float min_y, float max_y, float far_z, float near_z)
 {
-    //pravimo pozadinu
+
+    // Make background
 
     glBindTexture(GL_TEXTURE_2D, name1);
+
     glBegin(GL_QUADS);
     glNormal3f(0, 0, 1);
 
@@ -205,9 +221,10 @@ void funcMakeBackground(
     glVertex3f(min_x, max_y, far_z);
     glEnd();
 
-    //pravimo lavu
+    //Make lava
 
     glBindTexture(GL_TEXTURE_2D, name2);
+
     glBegin(GL_QUADS);
     glNormal3f(0, 1, 0);
 
@@ -224,10 +241,10 @@ void funcMakeBackground(
     glVertex3f(min_x, min_y, near_z);
     glEnd();
 
-    glBindTexture(GL_TEXTURE_2D, 0); //iskljucujemo aktivnu teksturu
+    unbindActiveTexture();
 }
 
-void funcMakePlayer(void)
+void renderPlayer(void)
 {
 
     GLdouble head_radius = 0.2;
@@ -281,5 +298,5 @@ void funcMakePlayer(void)
 
     glPopMatrix();
 
-    glColor3f(0, 0, 0); //todo ovo postaje lava
+    glColor3f(0, 0, 0); // TODO: This becomes lava!?
 }

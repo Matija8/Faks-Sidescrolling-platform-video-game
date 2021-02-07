@@ -4,19 +4,20 @@
 
 #include <GL/glut.h>
 
-#include "constants.h"
-#include "error_handling.h"
-#include "functions.h"
-#include "level.h"
-#include "player.h"
-#include "textures.h"
-#include "window.h"
+#include "../model/constants.h"
+#include "./error_handling.h"
+#include "../view/render.h"
+#include "../model/player.h"
+#include "../view/textures.h"
+#include "../view/window.h"
 
-// TODO: Create main.cpp file. Move all to src folder.
+// TODO: Create main.cpp file.
 
 GLuint names[4]; // Teksture.
 static float lava_floor;
 static bool animation_ongoing = true;
+
+// TODO: Extract camera to camera.cpp/h.
 
 struct Camera
 {
@@ -197,7 +198,7 @@ auto on_display() -> void
 
     lava_floor = min_floor - 0.5;
 
-    funcMakeBackground(
+    renderBackground(
         names[2],
         names[3],
         platforms[0].x_left - 100, platforms.back().x_right + 100,
@@ -207,16 +208,16 @@ auto on_display() -> void
 
     for (Platform platform : platforms)
     {
-        funcMakeBlock(names[1], platform);
+        renderPlatform(names[1], platform);
     }
 
-    funcMakeFinishSign(names[0], platforms.back());
+    renderFinishSign(names[0], platforms.back());
 
     //Model igraca.
 
     glPushMatrix();
     glTranslatef(player.x_coord, player.y_coord, 1);
-    funcMakePlayer();
+    renderPlayer();
     glPopMatrix();
 
     glutSwapBuffers();

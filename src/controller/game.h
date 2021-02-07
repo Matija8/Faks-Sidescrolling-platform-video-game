@@ -1,7 +1,7 @@
 #pragma once
 
-#include "player.h"
-#include "level.h"
+#include "../model/player.h"
+#include "../model/platforms.h"
 
 auto on_display() -> void;
 

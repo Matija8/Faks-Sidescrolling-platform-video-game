@@ -1,11 +1,11 @@
-#include "level.h"
+#include "./platforms.h"
 
 #include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <string>
 
-#include "error_handling.h"
+#include "../controller/error_handling.h"
 
 auto get_platforms(const std::string &file_with_level_data) -> std::vector<Platform>
 {
@@ -29,7 +29,6 @@ auto get_platforms(const std::string &file_with_level_data) -> std::vector<Platf
 
         platforms.push_back(p);
     }
-
 
     if (platforms.size() < 2)
         throw std::logic_error("Not enough platforms!");

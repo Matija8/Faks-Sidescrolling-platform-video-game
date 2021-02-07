@@ -1,6 +1,6 @@
 #pragma once
 
-#include "level.h"
+#include "./platforms.h" // TODO: Remove knowledge of platforms from player.h.
 #include "constants.h"
 
 constexpr double PLAYER_EDGE = 0.2,

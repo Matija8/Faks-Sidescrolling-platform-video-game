@@ -1,7 +1,7 @@
 #include <GL/glut.h>
 
-#include "image.h"
-#include "constants.h"
+#include "./image.h"
+#include "../model/constants.h"
 
 // Code by Ivan Cukic
 
