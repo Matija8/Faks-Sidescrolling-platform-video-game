@@ -3,16 +3,16 @@
 #include "../model/platforms.h"
 
 auto renderPlatform(
-    unsigned platform_texture_index,
+    unsigned platform_texture,
     Platform platform) -> void;
 
 auto renderFinishSign(
-    unsigned texture_number,
+    unsigned texture,
     Platform platform) -> void;
 
 auto renderBackground(
-    unsigned name1,
-    unsigned name2,
+    unsigned background_texture,
+    unsigned lava_texture,
     float min_x,
     float max_x,
     float min_y,
