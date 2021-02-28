@@ -7,7 +7,7 @@
 
 #include "../controller/error_handling.h"
 
-auto get_platforms(const std::string &file_with_level_data) -> std::vector<Platform>
+auto get_platforms(const std::string& file_with_level_data) -> std::vector<Platform>
 {
     std::vector<Platform> platforms;
 
@@ -36,14 +36,14 @@ auto get_platforms(const std::string &file_with_level_data) -> std::vector<Platf
     return platforms;
 }
 
-auto get_min_y_val_from_platforms(const Platforms &platforms) -> double
+auto get_min_y_val_from_platforms(const Platforms& platforms) -> double
 {
     assertIsTrueElseThrow(platforms.size() > 0);
     const std::vector<double> platform_y_vals = get_y_vals_from_platforms(platforms);
     return *(std::min_element(platform_y_vals.begin(), platform_y_vals.end()));
 }
 
-auto get_max_y_val_from_platforms(const Platforms &platforms) -> double
+auto get_max_y_val_from_platforms(const Platforms& platforms) -> double
 {
     assertIsTrueElseThrow(platforms.size() > 0);
     const std::vector<double> platform_y_vals = get_y_vals_from_platforms(platforms);
@@ -51,13 +51,13 @@ auto get_max_y_val_from_platforms(const Platforms &platforms) -> double
 }
 
 auto get_y_vals_from_platforms(
-    const Platforms &platforms) -> std::vector<double>
+    const Platforms& platforms) -> std::vector<double>
 {
     std::vector<double> platform_y_vals(platforms.size());
     std::transform(
         platforms.begin(), platforms.end(),
         platform_y_vals.begin(),
-        [](const Platform &platform) noexcept -> double {
+        [](const Platform& platform) noexcept -> double {
             return platform.y;
         });
 

@@ -34,13 +34,13 @@ auto Player::jump() -> void
     is_in_air = true;
 }
 
-auto Player::move(const Platforms &platforms, const double dt) -> void
+auto Player::move(const Platforms& platforms, const double dt) -> void
 {
     move_on_x_axis(platforms, dt);
     move_on_y_axis(platforms, dt);
 }
 
-auto Player::move_on_x_axis(const Platforms &platforms, const double dt) -> void
+auto Player::move_on_x_axis(const Platforms& platforms, const double dt) -> void
 {
 
     // const double old_x_velocity = x_velocity;
@@ -58,7 +58,7 @@ auto Player::move_on_x_axis(const Platforms &platforms, const double dt) -> void
     x_coord += x_velocity * dt;
 
     bool is_colliding = false;
-    for (auto &p : platforms)
+    for (auto& p : platforms)
     {
         if (x_coord + PLAYER_EDGE > p.x_left && x_coord - PLAYER_EDGE < p.x_right && p.y < y_coord + PLAYER_HEIGHT && p.y > y_coord)
         {
@@ -71,11 +71,11 @@ auto Player::move_on_x_axis(const Platforms &platforms, const double dt) -> void
         x_coord = x_coord_old;
 }
 
-auto Player::move_on_y_axis(const Platforms &platforms, const double dt) -> void
+auto Player::move_on_y_axis(const Platforms& platforms, const double dt) -> void
 {
     bool is_above_platform = false;
     double highest_platform_below_player_y = -10000;
-    for (auto &p : platforms)
+    for (auto& p : platforms)
     {
         if (x_coord + PLAYER_EDGE >= p.x_left && x_coord - PLAYER_EDGE <= p.x_right && y_coord >= p.y)
         {

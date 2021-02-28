@@ -1,4 +1,5 @@
-// Kod preuzet sa vezbi asistenta Ivana Cukica.
+// Code by Ivan Cukic
+// TODO: Review
 
 #pragma once
 

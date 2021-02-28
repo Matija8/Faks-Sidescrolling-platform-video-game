@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <string>
+#include <vector>
 
 struct Platform
 {
@@ -12,14 +12,14 @@ struct Platform
 
 using Platforms = std::vector<Platform>;
 
-auto get_platforms(const std::string &file_with_level_data) -> std::vector<Platform>;
+auto get_platforms(const std::string& file_with_level_data) -> std::vector<Platform>;
 
-auto get_min_y_val_from_platforms(const std::vector<Platform> &platforms) -> double;
+auto get_min_y_val_from_platforms(const std::vector<Platform>& platforms) -> double;
 
-auto get_max_y_val_from_platforms(const std::vector<Platform> &platforms) -> double;
+auto get_max_y_val_from_platforms(const std::vector<Platform>& platforms) -> double;
 
 auto get_y_vals_from_platforms(
-    const std::vector<Platform> &platforms) -> std::vector<double>;
+    const std::vector<Platform>& platforms) -> std::vector<double>;
 
 // TODO: Move to game.
 

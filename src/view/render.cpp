@@ -18,12 +18,12 @@ GLfloat material_emission[] = {0.3, 0.2, 0.2, 0};
 
 // TODO: Remove duplication in making quads.
 
-auto bindActiveTexture(unsigned texture_index)
+static auto bind_active_texture(unsigned texture_index)
 {
     glBindTexture(GL_TEXTURE_2D, texture_index);
 }
 
-auto unbindActiveTexture()
+static auto unbind_active_texture()
 {
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -37,7 +37,7 @@ auto renderPlatform(
                   max_x = platform.x_right,
                   y = platform.y;
 
-    bindActiveTexture(platform_texture_index);
+    bind_active_texture(platform_texture_index);
 
     //pravimo podlogu
 
@@ -111,7 +111,7 @@ auto renderPlatform(
     glVertex3f(max_x, y, -1);
     glEnd();
 
-    unbindActiveTexture();
+    unbind_active_texture();
 }
 
 auto renderFinishSign(
@@ -193,7 +193,7 @@ auto renderFinishSign(
     glVertex3f(max_x, floor_y, -1);
     glEnd();
 
-    unbindActiveTexture();
+    unbind_active_texture();
 }
 
 void renderBackground(
@@ -203,7 +203,7 @@ void renderBackground(
 
     // Make background
 
-    glBindTexture(GL_TEXTURE_2D, name1);
+    bind_active_texture(name1);
 
     glBegin(GL_QUADS);
     glNormal3f(0, 0, 1);
@@ -223,7 +223,7 @@ void renderBackground(
 
     //Make lava
 
-    glBindTexture(GL_TEXTURE_2D, name2);
+    bind_active_texture(name2);
 
     glBegin(GL_QUADS);
     glNormal3f(0, 1, 0);
@@ -241,11 +241,12 @@ void renderBackground(
     glVertex3f(min_x, min_y, near_z);
     glEnd();
 
-    unbindActiveTexture();
+    unbind_active_texture();
 }
 
 void renderPlayer(void)
 {
+    // TODO
 
     GLdouble head_radius = 0.2;
     GLdouble body_height = 0.4; //Sirina tela je bh/2 = 0.2.

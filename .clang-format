@@ -1,0 +1,9 @@
+BasedOnStyle: Microsoft
+---
+Language: Cpp
+IndentWidth: 4
+ColumnLimit: 0
+AccessModifierOffset: -4
+BreakConstructorInitializers: BeforeComma
+DerivePointerAlignment: false
+PointerAlignment: Left

@@ -1,4 +1,6 @@
-//Kod preuzet sa vezbi asistenta Ivana Cukica
+// Code by Ivan Cukic
+// TODO: Review
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>

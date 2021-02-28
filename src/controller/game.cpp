@@ -5,11 +5,11 @@
 #include <GL/glut.h>
 
 #include "../model/constants.h"
-#include "./error_handling.h"
-#include "../view/render.h"
 #include "../model/player.h"
+#include "../view/render.h"
 #include "../view/textures.h"
 #include "../view/window.h"
+#include "./error_handling.h"
 
 // TODO: Create main.cpp file.
 
@@ -30,11 +30,11 @@ static Camera camera;
 static AppWindow window;
 static Platforms platforms;
 
-auto &debug_log = std::cout;
+auto& debug_log = std::cout;
 
 // TODO: Pull out main into seperate file (main.cpp).
 
-auto main(int argc, char **argv) -> int
+auto main(int argc, char** argv) -> int
 {
     init_entities(platforms, player);
 
@@ -60,7 +60,7 @@ auto main(int argc, char **argv) -> int
     return 0;
 }
 
-auto init_entities(Platforms &platforms, Player &player) -> void
+auto init_entities(Platforms& platforms, Player& player) -> void
 {
     platforms = get_platforms(".level.txt");
     assertIsTrueElseThrow(platforms.size() > 0);
@@ -151,7 +151,7 @@ auto on_update(const double dt) -> void
         lose_game();
     }
 
-    static const Platform &last_platform = platforms.back();
+    static const Platform& last_platform = platforms.back();
 
     if (player.y_coord == last_platform.y && player.x_coord - PLAYER_EDGE >= last_platform.x_left && player.x_coord + PLAYER_EDGE <= last_platform.x_right)
     {
